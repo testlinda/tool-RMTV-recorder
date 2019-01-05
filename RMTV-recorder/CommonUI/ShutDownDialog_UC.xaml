@@ -1,0 +1,31 @@
+﻿<local:ucCustom x:Class="RMTV_recorder.ShutDownDialog_UC"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:RMTV_recorder"
+             mc:Ignorable="d" 
+             Height="150" Width="200" Background="LightSalmon">
+    <Grid Margin="20" HorizontalAlignment="Center">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <TextBlock Grid.Row="0" TextWrapping="WrapWithOverflow">
+                The computer is about to <Bold>shut down</Bold> in:
+        </TextBlock>
+        <Grid Grid.Row="1" HorizontalAlignment="Center">
+            <StackPanel Orientation="Horizontal">
+                <Label x:Name="label_sec" Content="--" FontSize="20"/>
+                <Label Content="second" FontSize="20"/>
+            </StackPanel>
+        </Grid>
+        <Button Grid.Row="3" Content="Cancel"
+                Height="40"
+                VerticalAlignment="Bottom"
+                Background="White"
+                Click="Button_Cancel_Click"/>
+
+    </Grid>
+</local:ucCustom>

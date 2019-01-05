@@ -1,0 +1,209 @@
+﻿<Window x:Class="RMTV_recorder.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:RMTV_recorder"
+        mc:Ignorable="d"
+        Height="550" Width="500"
+        ResizeMode="CanMinimize"
+        StateChanged ="Window_StateChanged"
+        Icon="Resource/icon.ico" >
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="10" />
+        </Grid.RowDefinitions>
+        <!-- Clock -->
+        <Grid Grid.Row="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="10" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="10" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="1*" />
+                <ColumnDefinition Width="10" />
+            </Grid.ColumnDefinitions>
+            <Grid Grid.Row="1" Grid.Column="1" 
+                  Background="OldLace">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Margin="10" VerticalAlignment="Center">
+                    <Image Source="/Resource/spain.png" Height="40" Width="40"/>
+                </StackPanel>
+                <Label Grid.Column="1" x:Name="label_time_spain" Content="--" Foreground="Salmon" FontSize="18" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+            </Grid>
+            <Grid Grid.Row="1" Grid.Column="3"
+                  Background="OldLace">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Margin="10" VerticalAlignment="Center">
+                    <Image Source="/Resource/local.png" Height="35" Width="35"/>
+                </StackPanel>
+                <Label Grid.Column="1" x:Name="label_time_local" Content="--" Foreground="Salmon" FontSize="18" VerticalAlignment="Center"/>
+            </Grid>
+            <Grid Grid.Row="1" Grid.Column="5" Background="LightSalmon">
+                <Image Source="/Resource/info.png" Height="50" MouseDown="Information_MouseDown"/>
+            </Grid>
+        </Grid>
+        <!-- Record now -->
+        <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Label Grid.Row="0" Content="Record now" Background="PeachPuff"/>
+            <Grid Grid.Row="1" Margin="10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <ComboBox Grid.Column="0" x:Name="cb_lang" Height="20" Width="70" Background="Wheat" IsSelected="True">
+                    <ComboBoxItem Tag="es" IsSelected="True">Spanish</ComboBoxItem>
+                    <ComboBoxItem Tag="en">English</ComboBoxItem>
+                </ComboBox>
+                <Button Grid.Column="2" x:Name="btn_record" Width="50" Height="50" Background="Transparent" Click="btn_record_Click">
+                    <StackPanel>
+                        <Image Source="/Resource/record.png" Width="40" Height="40"/>
+                    </StackPanel>
+                </Button>
+                <Label Grid.Column="2" x:Name="label_loading" Content="Loading" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Hidden"/>
+                <Grid Grid.Column="4">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="1*" />
+                        <RowDefinition Height="1*" />
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Label Grid.Column="0" Content="Start Time:"/>
+                        <Label Grid.Column="1" x:Name="label_starttime" Content="--"/>
+                        <Label Grid.Column="2" Content="Duration:"/>
+                        <Label Grid.Column="3" x:Name="label_duration" Content="--"/>
+                    </Grid>
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Label Grid.Column="0" Content="Satus:"/>
+                        <Label Grid.Column="1" x:Name="label_status" Content="--" Foreground="Crimson"/>
+                    </Grid>
+
+                </Grid>
+                <Button Grid.Column="5" x:Name="btn_openlog" 
+                        Height="30" Width="30" 
+                        Background="Transparent"
+                        ToolTip="Show log"
+                        Click="btn_openlog_m_Click">
+                    <StackPanel>
+                        <Image Source="/Resource/log.png" Width="20" Height="20"/>
+                    </StackPanel>
+                </Button>
+                <Button Grid.Column="7" x:Name="btn_openfolder" 
+                        Height="30" Width="30" 
+                        Background="Transparent"
+                        ToolTip="Open folder"
+                        Click='btn_openfolder_Click'>
+                    <StackPanel>
+                        <Image Source="/Resource/folder.png" Width="20" Height="20"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Grid>
+        <!-- Record scheduled -->
+        <Grid Grid.Row="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Label Grid.Row="0" Content="Scheduled Record" Background="PeachPuff"/>
+            <Grid Grid.Row="1" Margin="10">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Button Grid.Column="0" x:Name="btn_addRec" 
+                        Height="30" Width="30" 
+                        Background="Transparent"
+                        ToolTip="Add"
+                        Click='btn_addRec_Click'>
+                        <StackPanel>
+                            <Image Source="/Resource/add.png" Width="20" Height="20"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Grid.Column="2" x:Name="btn_deleteRec" 
+                        Height="30" Width="30" 
+                        Background="Transparent"
+                        ToolTip="Delete"
+                        Click='btn_deleteRec_Click'>
+                        <StackPanel>
+                            <Image Source="/Resource/delete.png" Width="20" Height="20"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+                <Grid Grid.Row="1" Margin="0,10">
+                    <DataGrid Name="dgRecObj" Height="220"
+                                              IsReadOnly="True"
+                                              AutoGenerateColumns="False"
+                                              CanUserResizeColumns="False" CanUserResizeRows="False"
+                                              CanUserSortColumns="False" CanUserReorderColumns="False"
+                                              CanUserAddRows="False" CanUserDeleteRows="False">
+                        <DataGrid.Columns>
+
+                            <DataGridTextColumn Header="#" Binding="{Binding Index}" Width="10" />
+                            <DataGridTextColumn  Header="Language" Binding="{Binding Language}" Width="Auto"/>
+                            <DataGridTextColumn Header="Start Time" Binding="{Binding StartTime,StringFormat='HH:mm:ss'}" Width="70"/>
+                            <DataGridTextColumn Header="End Time" Binding="{Binding EndTime, StringFormat='HH:mm:ss'}" Width="70"/>
+                            <DataGridTextColumn Header="Duration" Binding="{Binding Duration , StringFormat={}{0} min}" Width="70"/>
+                            <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="*"/>
+                            <DataGridTemplateColumn Header="Log" Width="30">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Click="btn_openlog_s_Click">
+                                            <StackPanel>
+                                                <Image Source="/Resource/log_small.png" Width="10" Height="10"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+                <CheckBox Grid.Row="2" x:Name="chechbox_isshutdown" Content="Shutdown the computer after the scheduled recording are completed." 
+                          Checked="chechbox_isshutdown_Checked" Unchecked="chechbox_isshutdown_Checked"/>
+            </Grid>
+        </Grid>
+
+    </Grid>
+</Window>
