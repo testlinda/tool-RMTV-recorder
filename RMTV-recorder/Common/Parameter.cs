@@ -8,7 +8,7 @@ namespace RMTV_recorder
 {
     class Parameter
     {
-        public static string _version = "1.1.0";
+        public static string _version = "1.1.2";
         public static string _author = "山腳下的小黑熊";
 
         public static string _windowTitle = "RMTV Recorder";

@@ -39,6 +39,7 @@ namespace RMTV_recorder
                                "\"", Parameter._outputPath, "\\", GetOutputFileName(language, isManaul), "\"");
             Debug.WriteLine(arguments);
             RecordVideo(arguments);
+            _process.WaitForExit();
         }
 
         private void RecordVideo(string arguments)
@@ -60,9 +61,6 @@ namespace RMTV_recorder
             //_process.BeginOutputReadLine();
             _process.ErrorDataReceived += EventErrorDataReceived;
             _process.BeginErrorReadLine();
-
-            _process.WaitForExit();
-            Debug.WriteLine("~~~ Process ended ~~~");
         }
 
         public void StopRecord()
@@ -78,7 +76,8 @@ namespace RMTV_recorder
 
         public void KillProcess()
         {
-            _process.Kill();
+            if (_process != null && !_process.HasExited)
+                _process.Kill();
         }
 
         public bool CheckAlive()

@@ -11,17 +11,17 @@ namespace RMTV_recorder
 {
     class CommonFunc
     {
-        public static bool GetCompleteFlag()
+        public static bool GetStatusChangedFlag()
         {
             return Global.flagTaskComplete;
         }
 
-        public static void RaiseCompleteFlag()
+        public static void RaiseStatusChangedFlag()
         {
             Global.flagTaskComplete = true;
         }
 
-        public static void ClearCompleteFlag()
+        public static void ClearStatusChangedFlag()
         {
             Global.flagTaskComplete = false;
         }

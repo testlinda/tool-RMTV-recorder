@@ -375,6 +375,7 @@ namespace RMTV_recorder
             log_uc.CloseDialog += new ucCustom.CloseDialogHandler(UserControl_CloseDialog);
             wincustom.winContent = log_uc;
             wincustom.Title = "Log";
+            wincustom.Topmost = true;
             wincustom.ShowInTaskbar = false;
             wincustom.ShowDialog();
         }
@@ -430,8 +431,14 @@ namespace RMTV_recorder
 
             wincustom.winContent = info_uc;
             wincustom.Title = "Information";
+            wincustom.Topmost = true;
             wincustom.ShowInTaskbar = false;
             wincustom.ShowDialog();
+        }
+
+        private void TV_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+
         }
 
         static void UserControl_CloseDialog(object sender, bool bApply, EventArgs e)
@@ -447,6 +454,7 @@ namespace RMTV_recorder
             addRec_uc.CloseDialog += new ucCustom.CloseDialogHandler(UserControl_CloseDialog);
             wincustom.winContent = addRec_uc;
             wincustom.Title = "Schedule a recording";
+            wincustom.Topmost = true;
             wincustom.ShowInTaskbar = false;
 
             if (wincustom.ShowDialog() == true)
@@ -484,6 +492,20 @@ namespace RMTV_recorder
             dgRecObj.Items.Refresh();
         }
 
+        private void btn_stopRec_Click(object sender, RoutedEventArgs e)
+        {
+            if (dgRecObj.SelectedItems.Count > 0)
+            {
+                for (int i = 0; i < dgRecObj.SelectedItems.Count; i++)
+                {
+                    RecObj recObj = (RecObj)dgRecObj.SelectedItems[i];
+                    recObj.Ffmpeg.StopRecord();
+                    recObj.Status = RecObj.RecordStatus.Completed;
+                    CommonFunc.RaiseStatusChangedFlag();
+                };
+            }
+        }
+
         private void StartRefreshDataGrid()
         {
             timer_refreshdg = new Timer(timer_refreshdg_interval_sec * 1000);
@@ -508,11 +530,11 @@ namespace RMTV_recorder
         private void RefreshDataGrid()
         {
             //Debug.WriteLine("Refresh DataGrid at " + DateTime.Now.ToString("HH:mm:ss"));
-            dgRecObj.Items.Refresh();
 
-            if (CommonFunc.GetCompleteFlag())
+            if (CommonFunc.GetStatusChangedFlag())
             {
-                CommonFunc.ClearCompleteFlag();
+                dgRecObj.Items.Refresh();
+                CommonFunc.ClearStatusChangedFlag();
 
                 if (chechbox_isshutdown.IsChecked == true &&
                 chechbox_isshutdown.Visibility == Visibility.Visible &&
@@ -555,10 +577,8 @@ namespace RMTV_recorder
         {
             if (!File.Exists(Parameter._testfile_Path))
             {
-                btn_test1.Visibility = Visibility.Hidden;
-                btn_test2.Visibility = Visibility.Hidden;
+                stackpanel_test.Visibility = Visibility.Collapsed;
             }
-
         }
 
         private void RefreshRecObjIndex()
@@ -580,6 +600,7 @@ namespace RMTV_recorder
             log_uc.CloseDialog += new ucCustom.CloseDialogHandler(UserControl_CloseDialog);
             wincustom.winContent = log_uc;
             wincustom.Title = "Log";
+            wincustom.Topmost = true;
             wincustom.ShowInTaskbar = false;
             wincustom.ShowDialog();
         }

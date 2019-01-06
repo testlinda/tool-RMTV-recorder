@@ -64,7 +64,6 @@ namespace RMTV_recorder
                 ts = date - dateNow;
             }
 
-            Debug.WriteLine("ts: " + ts);
             Task.Delay(ts, _tokenSource.Token).ContinueWith((isTaskContinued) => DoTask());
             return true;
         }

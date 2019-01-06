@@ -48,10 +48,12 @@ namespace RMTV_recorder
                 return;
             }
             Status = RecordStatus.Recording;
+            CommonFunc.RaiseStatusChangedFlag();
+
             Ffmpeg.StartRecord(false, (Language.Equals(Parameter.Language_Spanish)), Duration * 60);
 
             Status = (Ffmpeg.CheckFIleExist()) ? RecordStatus.Completed : RecordStatus.Failed;
-            CommonFunc.RaiseCompleteFlag();
+            CommonFunc.RaiseStatusChangedFlag();
         }
     }
 }

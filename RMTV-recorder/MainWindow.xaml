@@ -29,7 +29,9 @@
                 <ColumnDefinition Width="10" />
                 <ColumnDefinition Width="2*" />
                 <ColumnDefinition Width="10" />
-                <ColumnDefinition Width="1*" />
+                <ColumnDefinition Width="60" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="60" />
                 <ColumnDefinition Width="10" />
             </Grid.ColumnDefinitions>
             <Grid Grid.Row="1" Grid.Column="1" 
@@ -55,7 +57,10 @@
                 <Label Grid.Column="1" x:Name="label_time_local" Content="--" Foreground="Salmon" FontSize="18" VerticalAlignment="Center"/>
             </Grid>
             <Grid Grid.Row="1" Grid.Column="5" Background="LightSalmon">
-                <Image Source="/Resource/info.png" Height="50" MouseDown="Information_MouseDown"/>
+                <Image Source="/Resource/tv.png" Height="40" MouseDown="TV_MouseDown"/>
+            </Grid>
+            <Grid Grid.Row="1" Grid.Column="7" Background="LightSalmon">
+                <Image Source="/Resource/info.png" Height="40" MouseDown="Information_MouseDown"/>
             </Grid>
         </Grid>
         <!-- Record now -->
@@ -70,13 +75,13 @@
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="10" />
                     <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="5" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="10" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <ComboBox Grid.Column="0" x:Name="cb_lang" Height="20" Width="70" Background="Wheat" IsSelected="True">
+                <ComboBox Grid.Column="0" x:Name="cb_lang" Height="20" Width="75" Background="Wheat" IsSelected="True">
                     <ComboBoxItem Tag="es" IsSelected="True">Spanish</ComboBoxItem>
                     <ComboBoxItem Tag="en">English</ComboBoxItem>
                 </ComboBox>
@@ -152,6 +157,7 @@
                         <ColumnDefinition Width="10" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <Button Grid.Column="0" x:Name="btn_addRec" 
                         Height="30" Width="30" 
@@ -163,15 +169,25 @@
                         </StackPanel>
                     </Button>
                     <Button Grid.Column="2" x:Name="btn_deleteRec" 
-                        Height="30" Width="30" 
-                        Background="Transparent"
-                        ToolTip="Delete"
-                        Click='btn_deleteRec_Click'>
+                            Height="30" Width="30" 
+                            Background="Transparent"
+                            ToolTip="Delete"
+                            Click='btn_deleteRec_Click'>
+                            <StackPanel>
+                                <Image Source="/Resource/delete.png" Width="20" Height="20"/>
+                            </StackPanel>
+                    </Button>
+                    <Button Grid.Column="3"
+                            Height="30" Width="30" 
+                            Background="Transparent"
+                            HorizontalAlignment="Right"
+                            ToolTip="Stop Recording"
+                            Click='btn_stopRec_Click'>
                         <StackPanel>
-                            <Image Source="/Resource/delete.png" Width="20" Height="20"/>
+                            <Image Source="/Resource/stop.png"/>
                         </StackPanel>
                     </Button>
-                    <StackPanel Grid.Column="3" Orientation="Horizontal"  HorizontalAlignment="Right">
+                    <StackPanel Grid.Column="4" x:Name="stackpanel_test" Orientation="Horizontal"  HorizontalAlignment="Right">
                         <Button Height="30" Width="30" 
                                 x:Name="btn_test1"
                                 Background="Transparent"
