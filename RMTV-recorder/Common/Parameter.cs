@@ -8,7 +8,7 @@ namespace RMTV_recorder
 {
     class Parameter
     {
-        public static string _version = "1.0.0";
+        public static string _version = "1.1.0";
         public static string _author = "山腳下的小黑熊";
 
         public static string _windowTitle = "RMTV Recorder";
@@ -19,19 +19,25 @@ namespace RMTV_recorder
         public static string _m3u8_es_Path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resource\\rmtv-es.m3u8");
         public static string _m3u8_en_Path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resource\\rmtv-en.m3u8");
         public static string _keyfile_Path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resource\\iamacrazylukamodriclover.txt");
+        public static string _testfile_Path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resource\\test.txt");
 
         public static string _timezoneIdSpain = "Romance Standard Time";
         public static string _timezoneIdTaiwan = "Taipei Standard Time";
         public static string _timezoneIdUTC = "UTC";
+
+        public static string Language_Spanish = "Spanish";
+        public static string Language_English = "English";
+
+        public static int delay_sec = 1;
     }
 
     class Global
     {
         public static List<RecObj> _groupRecObj;
         public static System.Windows.Forms.NotifyIcon _notifyIcon;
+        public static bool flagTaskComplete = false;
     }
 
     public delegate void OperationHandler();
-
 
 }

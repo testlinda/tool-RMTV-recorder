@@ -8,11 +8,12 @@ using System.Text;
 
 namespace RMTV_recorder
 {
-    class FFmpeg
+    public class FFmpeg
     {
         private Process _process = null;
         //private string _log = string.Empty;
         private List<string> _log = null;
+        private string _fileName = string.Empty;
 
         public FFmpeg()
         {
@@ -21,15 +22,32 @@ namespace RMTV_recorder
 
         public void StartRecord(bool isManaul, bool language)
         {
-            ProcessStartInfo startInfo = new ProcessStartInfo();
-            string cmd = String.Concat("-hide_banner -protocol_whitelist \"concat,file,subfile,http,https,tls,rtp,tcp,udp,crypto\" -i \"",
-                                       (language? Parameter._m3u8_es_Path : Parameter._m3u8_en_Path),
-                                       "\" -c copy ");
+            string arguments = String.Concat("-hide_banner -protocol_whitelist \"concat,file,subfile,http,https,tls,rtp,tcp,udp,crypto\" -i \"",
+                                           (language ? Parameter._m3u8_es_Path : Parameter._m3u8_en_Path),
+                                           "\"", " -c copy ", 
+                                           "\"", Parameter._outputPath, "\\", GetOutputFileName(language, isManaul), "\"");
+            Debug.WriteLine(arguments);
+            RecordVideo(arguments);
+        }
 
+        public void StartRecord(bool isManaul, bool language, int duration)
+        {
+            string arguments = String.Concat("-hide_banner -protocol_whitelist \"concat,file,subfile,http,https,tls,rtp,tcp,udp,crypto\" -i \"",
+                               (language ? Parameter._m3u8_es_Path : Parameter._m3u8_en_Path),
+                               "\"", " -t ", duration,
+                               " -c copy ",
+                               "\"", Parameter._outputPath, "\\", GetOutputFileName(language, isManaul), "\"");
+            Debug.WriteLine(arguments);
+            RecordVideo(arguments);
+        }
+
+        private void RecordVideo(string arguments)
+        {
+            ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.CreateNoWindow = true;
             startInfo.UseShellExecute = false;
             startInfo.FileName = Parameter._ffmpegPath;
-            startInfo.Arguments = string.Concat(cmd, "\"", Parameter._outputPath, "\\", GetOutputFileName(language, isManaul), "\"");
+            startInfo.Arguments = arguments;
             //startInfo.Arguments = "-h";
             startInfo.RedirectStandardInput = true;
             startInfo.RedirectStandardOutput = true;
@@ -43,11 +61,13 @@ namespace RMTV_recorder
             _process.ErrorDataReceived += EventErrorDataReceived;
             _process.BeginErrorReadLine();
 
+            _process.WaitForExit();
+            Debug.WriteLine("~~~ Process ended ~~~");
         }
 
         public void StopRecord()
         {
-            if (_process != null)
+            if (_process != null && !_process.HasExited)
             {
                 if(!SendCtrlCKey())
                 {
@@ -59,6 +79,11 @@ namespace RMTV_recorder
         public void KillProcess()
         {
             _process.Kill();
+        }
+
+        public bool CheckAlive()
+        {
+            return !_process.HasExited;
         }
 
         internal const int CTRL_C_EVENT = 0;
@@ -111,16 +136,26 @@ namespace RMTV_recorder
             Debug.WriteLine(e.Data);
         }
 
+        public bool CheckFIleExist()
+        {
+            if(File.Exists(Path.Combine(Parameter._outputPath, _fileName)))
+            {
+                return true;
+            }
+            return false;
+        }
+
         private string GetOutputFileName(bool language, bool isManaul)
         {
             TimeStamp stamp = new TimeStamp();
-            return string.Concat("rmtv-record_", 
-                                 (language ? "spanish" : "english"), 
-                                 "_", 
-                                 stamp.GetTimeStamp(), 
-                                 "_",
-                                 (isManaul ? "manually" : "schedule"),
-                                 ".mp4");
+            _fileName =  string.Concat("rmtv-record_", 
+                                       (language ? "spanish" : "english"), 
+                                       "_", 
+                                       stamp.GetTimeStamp(), 
+                                       "_",
+                                       (isManaul ? "manual" : "scheduled"),
+                                       ".mp4");
+            return _fileName;
         }
 
         public string GetLog()

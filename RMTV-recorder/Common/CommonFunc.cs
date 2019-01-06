@@ -1,15 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Windows;
 
 namespace RMTV_recorder
 {
     class CommonFunc
     {
-        public static void PrepareShutDown(Window window)
+        public static bool GetCompleteFlag()
+        {
+            return Global.flagTaskComplete;
+        }
+
+        public static void RaiseCompleteFlag()
+        {
+            Global.flagTaskComplete = true;
+        }
+
+        public static void ClearCompleteFlag()
+        {
+            Global.flagTaskComplete = false;
+        }
+
+        public static bool PrepareShutDown(Window window)
         {
             winCustom wincustom = new winCustom();
             ShutDownDialog_UC shutdownDialog_uc = new ShutDownDialog_UC();
@@ -20,9 +37,10 @@ namespace RMTV_recorder
             wincustom.winContent = shutdownDialog_uc;
             wincustom.Title = "Warning";
             wincustom.CloseButtonVisible = false;
+            wincustom.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             wincustom.Topmost = true;
             wincustom.ShowInTaskbar = false;
-            wincustom.ShowDialog();
+            return (wincustom.ShowDialog() == true);
         }
 
         private static void ShutDown()
@@ -40,18 +58,31 @@ namespace RMTV_recorder
 
         public static DateTime ConvertDateTime2Local(DateTime datetime_spain)
         {
-            TimeZoneInfo timeZoneInfo_local = TimeZoneInfo.Local;
             TimeZoneInfo timeZoneInfo_spain = TimeZoneInfo.FindSystemTimeZoneById(Parameter._timezoneIdSpain);
+            DateTime datetime_Unspec = DateTime.SpecifyKind(datetime_spain, DateTimeKind.Unspecified);
+            DateTime datetime_Utc = TimeZoneInfo.ConvertTimeToUtc(datetime_Unspec, timeZoneInfo_spain);
+            DateTime datetime_local = datetime_Utc.ToLocalTime();
 
-            return TimeZoneInfo.ConvertTime(datetime_spain, timeZoneInfo_spain, timeZoneInfo_local);
+            return datetime_local;
         }
 
         public static DateTime ConvertDateTime2Spain(DateTime datetime_local)
         {
-            TimeZoneInfo timeZoneInfo_local = TimeZoneInfo.Local;
-            TimeZoneInfo timeZoneInfo_spain = TimeZoneInfo.FindSystemTimeZoneById(Parameter._timezoneIdSpain);
+            datetime_local = DateTime.SpecifyKind(datetime_local, DateTimeKind.Local);
+            DateTime datetime_spain = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(datetime_local.ToUniversalTime(), Parameter._timezoneIdSpain);
 
-            return TimeZoneInfo.ConvertTime(datetime_local, timeZoneInfo_local, timeZoneInfo_spain);
+            return datetime_spain;
+        }
+
+        public static void test()
+        {
+            //MessageBox.Show("Test!");
+            Thread.Sleep(5000);
+            Debug.WriteLine("Hello");
+            Debug.WriteLine("Hello");
+            Debug.WriteLine("Hello");
+            Debug.WriteLine("Hello");
+            Debug.WriteLine("Hello");
         }
     }
 }

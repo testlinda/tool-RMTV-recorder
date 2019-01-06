@@ -41,6 +41,11 @@ namespace RMTV_recorder
         {
             if (CheckData())
             {
+                //Debug.WriteLine(GetSpainTime());
+                //Debug.WriteLine(GetStartTime());
+                //Debug.WriteLine(GetEndTime());
+                //Debug.WriteLine(GetDuration());
+
                 RecObj recObj = new RecObj
                 {
                     Index = GetIndex(),
@@ -49,15 +54,11 @@ namespace RMTV_recorder
                     StartTimeIsNow = (rb_starttime_now.IsChecked == true),
                     EndTime = GetEndTime(),
                     Duration = GetDuration(),
-                    Status = RecObj.RecordStatus.WillBeRecorded,
-                    Log = ""
+                    Status = RecObj.RecordStatus.Scheduled,
+                    Log = "",
                 };
 
-                //Debug.WriteLine(GetSpainTime());
-                //Debug.WriteLine(GetStartTime());
-                //Debug.WriteLine(GetEndTime());
-                //Debug.WriteLine(GetDuration());
-
+                recObj.Initialation();
                 Global._groupRecObj.Add(recObj);
                 base.OnCloseDialog(this, true, e);
             }
@@ -115,9 +116,6 @@ namespace RMTV_recorder
                 .AddMinutes(int.Parse(tb_statrttime_min.Text));
             DateTime date_now = GetSpainTime(); //Time of Spain
 
-            //Debug.WriteLine(string.Format("set {0:HH:mm:ss tt}", date));
-            //Debug.WriteLine(string.Format("cuurent {0:HH:mm:ss tt}", date_now));
-
             if (DateTime.Compare(date, date_now) <= 0)
                 return true;
 
@@ -156,9 +154,9 @@ namespace RMTV_recorder
         private string GetLanguage()
         {
             if (rb_lang_spanish.IsChecked == true)
-                return "Spanish";
+                return Parameter.Language_Spanish ;
             else
-                return "English";
+                return Parameter.Language_English;
         }
 
         private DateTime GetStartTime()
@@ -167,7 +165,7 @@ namespace RMTV_recorder
 
             if (rb_starttime_now.IsChecked == true)
             {
-                date = GetSpainTime();
+                date = GetSpainTime().AddSeconds(Parameter.delay_sec);
             }
             else
             {
@@ -213,6 +211,8 @@ namespace RMTV_recorder
 
             tb_statrttime_hour.IsEnabled = !(rb_starttime_now.IsChecked == true);
             tb_statrttime_min.IsEnabled = !(rb_starttime_now.IsChecked == true);
+            tb_statrttime_hour.Text = !(rb_starttime_now.IsChecked == true)? "11":"";
+            tb_statrttime_min.Text = !(rb_starttime_now.IsChecked == true) ? "00" : "";
         }
     }
 }

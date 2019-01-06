@@ -13,7 +13,7 @@ namespace RMTV_recorder
     class Clock
     {
         private Timer timer = null;
-        private delegate void TimerDispatcherDelegate();
+        //private delegate void TimerDispatcherDelegate();
         private Window _window = null;
         private Label _label = null;
 
@@ -61,7 +61,7 @@ namespace RMTV_recorder
         {
             if (_window != null)
             {
-                _window.Dispatcher.Invoke(DispatcherPriority.Normal, new TimerDispatcherDelegate(updateClock));
+                _window.Dispatcher.Invoke(DispatcherPriority.Normal, new OperationHandler(updateClock));
             }
         }
 
@@ -96,7 +96,7 @@ namespace RMTV_recorder
         {
             if (_window != null)
             {
-                _window.Dispatcher.Invoke(DispatcherPriority.Normal, new TimerDispatcherDelegate(updateTimer));
+                _window.Dispatcher.Invoke(DispatcherPriority.Normal, new OperationHandler(updateTimer));
             }
         }
 

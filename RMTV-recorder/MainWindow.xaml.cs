@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading;
+using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -14,6 +14,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
+using System.Windows.Threading;
 
 namespace RMTV_recorder
 {
@@ -22,14 +23,16 @@ namespace RMTV_recorder
         private const string _windowTitle = "RMTV Recorder";
         private const string _outputPath = "output";
         private bool isManuallyRecording = false;
-        private bool isScheduledRecording = false;
         private bool load_success = false;
 
-        private BackgroundWorker backgroundWorker = null;
+        private BackgroundWorker backgroundWorker_manual = null;
         private FFmpeg ffmpeg_manual = null;
         private Clock timer_manual = null;
-        private string _selectedLang_manual = "Spanish";
-
+        private string _selectedLang_manual = Parameter.Language_Spanish ;
+        private Timer timer_refreshdg = null;
+        private int timer_refreshdg_interval_sec = 2;
+        private Timer timer_manualrecord_checkalive = null;
+        private int timer_manualrecord_checkalive_interval_sec = 2;
 
         public MainWindow()
         {
@@ -38,12 +41,6 @@ namespace RMTV_recorder
             this.Loaded += Window_Loaded;
 
             load_success = Intialization();
-            //test();
-        }
-
-        private void test()
-        {
-            MessageBox.Show(AppDomain.CurrentDomain.BaseDirectory);
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -60,6 +57,8 @@ namespace RMTV_recorder
             {
                 return false;
             }
+
+            test();
 
             DisplayClock();
             InitialOutputFolder();
@@ -113,9 +112,9 @@ namespace RMTV_recorder
 
         private void InitialRecording()
         {
-            backgroundWorker = new BackgroundWorker();
-            backgroundWorker.DoWork += BackgroundWorker_DoWork;
-            backgroundWorker.RunWorkerCompleted += BackgroundWorker_RunWorkerCompleted;
+            backgroundWorker_manual = new BackgroundWorker();
+            backgroundWorker_manual.DoWork += BackgroundWorker_Manual_DoWork;
+            backgroundWorker_manual.RunWorkerCompleted += BackgroundWorker_Manual_RunWorkerCompleted;
         }
 
         private void InitialNotifyIcon()
@@ -153,7 +152,8 @@ namespace RMTV_recorder
             isStopped,
             isStartRecording,
             isRecording,
-            isStopRecording
+            isStopRecording,
+            isStopped_Failed
         }
 
         private void SetRecordButton(RecordButtonStatus bStatus)
@@ -229,6 +229,23 @@ namespace RMTV_recorder
                     cb_lang.IsEnabled = false;
                     break;
 
+                case RecordButtonStatus.isStopped_Failed:
+                    btn_record.ToolTip = "Start recording";
+                    btn_record.Content = new Image
+                    {
+                        Source = new BitmapImage(new Uri("/Resource/record.png", UriKind.RelativeOrAbsolute)),
+                        Stretch = Stretch.Uniform,
+                        Height = 40,
+                        Width = 40
+                    };
+                    label_loading.Visibility = Visibility.Hidden;
+                    btn_record.IsEnabled = true;
+                    btn_openlog.Visibility = Visibility.Visible;
+                    label_status.Content = "Stopped (Failed)";
+                    timer_manual.StopTimer();
+                    cb_lang.IsEnabled = true;
+                    break;
+
                 default:
                     break;
             }
@@ -267,28 +284,29 @@ namespace RMTV_recorder
                 SetRecordButton(RecordButtonStatus.isStopRecording);
             }
 
-            backgroundWorker.RunWorkerAsync();
+            backgroundWorker_manual.RunWorkerAsync();
         }
 
-        private void BackgroundWorker_DoWork(object sender, DoWorkEventArgs e)
+        private void BackgroundWorker_Manual_DoWork(object sender, DoWorkEventArgs e)
         {
             if (isManuallyRecording)
             {
                 RecordVideo();
-                Thread.Sleep(5000);
+                System.Threading.Thread.Sleep(1000);
             }
             else
             {
                 StopRecordVideo();
-                Thread.Sleep(1000);
+                System.Threading.Thread.Sleep(1000);
             }
         }
 
-        private void BackgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        private void BackgroundWorker_Manual_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             if (isManuallyRecording)
             {
                 SetRecordButton(RecordButtonStatus.isRecording);
+                StartCheckManualRecordAlive();
             }
             else
             {
@@ -296,12 +314,11 @@ namespace RMTV_recorder
             }
 
         }
-
         
         private void RecordVideo()
         {
             ffmpeg_manual = new FFmpeg();
-            ffmpeg_manual.StartRecord(true, _selectedLang_manual.Equals("Spanish"));
+            ffmpeg_manual.StartRecord(true, _selectedLang_manual.Equals(Parameter.Language_Spanish ));
         }
 
         private void StopRecordVideo()
@@ -309,8 +326,36 @@ namespace RMTV_recorder
             if (ffmpeg_manual!= null)
             {
                 ffmpeg_manual.StopRecord();
-                string log = ffmpeg_manual.GetLog();
             }
+        }
+
+        private void StartCheckManualRecordAlive()
+        {
+            timer_manualrecord_checkalive = new Timer(timer_manualrecord_checkalive_interval_sec * 1000);
+            timer_manualrecord_checkalive.Elapsed += new ElapsedEventHandler(OnCheckAliveEvent);
+            timer_manualrecord_checkalive.Interval = timer_manualrecord_checkalive_interval_sec * 1000;
+            timer_manualrecord_checkalive.Enabled = true;
+        }
+
+        private void StopCheckManualRecordAlive()
+        {
+            if (timer_manualrecord_checkalive != null)
+                timer_manualrecord_checkalive.Enabled = false;
+        }
+
+        private void OnCheckAliveEvent(object sender, EventArgs e)
+        {
+            if (!ffmpeg_manual.CheckAlive())
+            {
+                StopCheckManualRecordAlive();
+                this.Dispatcher.Invoke(DispatcherPriority.Normal, new OperationHandler(NotifyFailedRecording));
+            }
+        }
+
+        public void NotifyFailedRecording()
+        {
+            isManuallyRecording = false;
+            SetRecordButton(RecordButtonStatus.isStopped_Failed);
         }
 
         private void chechbox_isshutdown_Checked(object sender, RoutedEventArgs e)
@@ -336,7 +381,7 @@ namespace RMTV_recorder
 
         private void OnClosing(object sender, CancelEventArgs cancelEventArgs)
         {
-            if (isManuallyRecording || isScheduledRecording)
+            if (isManuallyRecording || !IsAllSceduleCompleted())
             {
                 if (MessageBox.Show(this, 
                     "Are you sure you want to exit? " + "\n" + "There are still videos recording or scheduled to record!", 
@@ -354,8 +399,13 @@ namespace RMTV_recorder
                     {
                         foreach (RecObj obj in Global._groupRecObj)
                         {
-                            if (obj._ffmpeg != null)
-                                obj._ffmpeg.KillProcess();
+                            if (obj.Ffmpeg != null)
+                                obj.Ffmpeg.KillProcess();
+
+                            if (obj.Task != null)
+                            {
+                                obj.Task.CancelTask();
+                            }
                         }
                     }
                 }
@@ -402,33 +452,113 @@ namespace RMTV_recorder
             if (wincustom.ShowDialog() == true)
             {
                 dgRecObj.Items.Refresh();
-                isScheduledRecording = true;
-                chechbox_isshutdown.Visibility = Visibility.Visible;
+
+                if (dgRecObj.Items.Count == 1)
+                {
+                    chechbox_isshutdown.Visibility = Visibility.Visible;
+                    chechbox_isshutdown.IsChecked = false;
+                    StartRefreshDataGrid();
+                }
             }
         }
 
         private void btn_deleteRec_Click(object sender, RoutedEventArgs e)
         {
-            int index = 0;
             if (dgRecObj.SelectedItems.Count > 0)
             {
-                for (int i = dgRecObj.SelectedItems.Count; i > 0; i--)
+                for (int i = 0; i < dgRecObj.SelectedItems.Count; i++)
                 {
-                    index = ((RecObj)dgRecObj.SelectedItems[i-1]).Index - 1;
-                    Global._groupRecObj.RemoveAt(index);
+                    RecObj recObj = (RecObj)dgRecObj.SelectedItems[i];
+                    recObj.Task.CancelTask();
+                    Global._groupRecObj.Remove(recObj);
                 };
             }
 
             if (Global._groupRecObj.Count == 0)
             {
-                isScheduledRecording = false;
                 chechbox_isshutdown.Visibility = Visibility.Hidden;
+                StopRefreshDataGrid();
             }
 
             RefreshRecObjIndex();
             dgRecObj.Items.Refresh();
+        }
 
+        private void StartRefreshDataGrid()
+        {
+            timer_refreshdg = new Timer(timer_refreshdg_interval_sec * 1000);
+            timer_refreshdg.Elapsed += new ElapsedEventHandler(OnRefreshEvent);
+            timer_refreshdg.Interval = timer_refreshdg_interval_sec * 1000;
+            timer_refreshdg.Enabled = true;
+        }
+
+        private void StopRefreshDataGrid()
+        {
+            if (timer_refreshdg != null)
+            {
+                timer_refreshdg.Enabled = false;
+            }
+        }
+
+        private void OnRefreshEvent(object sender, EventArgs e)
+        {
+            this.Dispatcher.Invoke(DispatcherPriority.Normal, new OperationHandler(RefreshDataGrid));
+        }
+
+        private void RefreshDataGrid()
+        {
+            //Debug.WriteLine("Refresh DataGrid at " + DateTime.Now.ToString("HH:mm:ss"));
+            dgRecObj.Items.Refresh();
+
+            if (CommonFunc.GetCompleteFlag())
+            {
+                CommonFunc.ClearCompleteFlag();
+
+                if (chechbox_isshutdown.IsChecked == true &&
+                chechbox_isshutdown.Visibility == Visibility.Visible &&
+                IsAllSceduleCompleted())
+                {
+                    StopRefreshDataGrid();
+                    if (!CommonFunc.PrepareShutDown(this))
+                    {
+                        chechbox_isshutdown.IsChecked = false;
+                        StartRefreshDataGrid();
+                    }
+                }
+            }
             
+        }
+
+        private bool IsAllSceduleCompleted()
+        {
+            foreach (RecObj obj in Global._groupRecObj)
+            {
+                if (obj.Status == RecObj.RecordStatus.Scheduled || obj.Status == RecObj.RecordStatus.Recording)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private void btn_test1_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void btn_test2_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void test()
+        {
+            if (!File.Exists(Parameter._testfile_Path))
+            {
+                btn_test1.Visibility = Visibility.Hidden;
+                btn_test2.Visibility = Visibility.Hidden;
+            }
+
         }
 
         private void RefreshRecObjIndex()
@@ -441,7 +571,17 @@ namespace RMTV_recorder
 
         private void btn_openlog_s_Click(object sender, RoutedEventArgs e)
         {
-            
+            RecObj obj = ((FrameworkElement)sender).DataContext as RecObj;
+
+            winCustom wincustom = new winCustom();
+            Log_UC log_uc = new Log_UC();
+
+            log_uc.Log = (obj.Ffmpeg == null) ? "" : obj.Ffmpeg.GetLog();
+            log_uc.CloseDialog += new ucCustom.CloseDialogHandler(UserControl_CloseDialog);
+            wincustom.winContent = log_uc;
+            wincustom.Title = "Log";
+            wincustom.ShowInTaskbar = false;
+            wincustom.ShowDialog();
         }
 
         

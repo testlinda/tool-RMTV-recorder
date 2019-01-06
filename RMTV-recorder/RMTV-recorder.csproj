@@ -67,6 +67,7 @@
     </Compile>
     <Compile Include="Common\CommonFunc.cs" />
     <Compile Include="Common\Parameter.cs" />
+    <Compile Include="Common\ScheduledTask.cs" />
     <Compile Include="Common\Time.cs" />
     <Compile Include="CommonUI\winCustom.xaml.cs">
       <DependentUpon>winCustom.xaml</DependentUpon>

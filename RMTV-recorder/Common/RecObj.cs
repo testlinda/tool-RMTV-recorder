@@ -1,17 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
 namespace RMTV_recorder
 {
-    class RecObj
+    public class RecObj
     {
         public enum RecordStatus
         {
-            WillBeRecorded,
-            IsRecording,
-            RecordCompleted,
+            Scheduled,
+            Recording,
+            Completed,
             Failed
         }
 
@@ -23,16 +24,34 @@ namespace RMTV_recorder
         public int Duration { get; set; }
         public RecordStatus Status { get; set; }
         public string Log { get; set; }
-        public FFmpeg _ffmpeg = null;
+        public FFmpeg Ffmpeg { get; set; }
+        public ScheduledTask Task { get; set; }
 
-        //public RecObj()
-        //{
+        public RecObj()
+        {
+            
+        }
 
-        //}
+        public void Initialation()
+        {
+            Ffmpeg = new FFmpeg();
+            Task = new ScheduledTask(CommonFunc.ConvertDateTime2Local(StartTime), 
+                                     RecordVideo);
+            Task.ArrangeTask();
+        }
 
-        //protected int sortIndex()
-        //{
+        private void RecordVideo()
+        {
+            if (Ffmpeg == null || Task == null)
+            {
+                Debug.WriteLine("RecObj was not initialized!");
+                return;
+            }
+            Status = RecordStatus.Recording;
+            Ffmpeg.StartRecord(false, (Language.Equals(Parameter.Language_Spanish)), Duration * 60);
 
-        //}
+            Status = (Ffmpeg.CheckFIleExist()) ? RecordStatus.Completed : RecordStatus.Failed;
+            CommonFunc.RaiseCompleteFlag();
+        }
     }
 }

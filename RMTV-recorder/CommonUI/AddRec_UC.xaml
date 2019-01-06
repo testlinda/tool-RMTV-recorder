@@ -27,14 +27,18 @@
             <RadioButton GroupName="lang" Content="English" />
         </StackPanel>
         <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-            <RadioButton GroupName="time" Content="Now" x:Name="rb_starttime_now" IsChecked="True" VerticalAlignment="Center" Checked="RadioButton_Time_CheckedChanged"/>
-            <Label Width="10"/>
-            <RadioButton GroupName="time" Content="At" VerticalAlignment="Center" Checked="RadioButton_Time_CheckedChanged"/>
-            <Label Width="5"/>
-            <TextBox x:Name="tb_statrttime_hour" Width="30" MaxLength="2" TextChanged="textBox_TextChanged" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsEnabled="False"/>
-            <Label Content=":"/>
-            <TextBox x:Name="tb_statrttime_min" Width="30" MaxLength="2" TextChanged="textBox_TextChanged" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsEnabled="False"/>
-            <Label Content="(Spain Time)"/>
+            <RadioButton GroupName="time" x:Name="rb_starttime_now" IsChecked="True" VerticalContentAlignment="Center" Checked="RadioButton_Time_CheckedChanged">
+                <Label Content="Now"/>
+            </RadioButton>
+            <RadioButton GroupName="time" VerticalContentAlignment="Center" Checked="RadioButton_Time_CheckedChanged">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Label Content="At"/>
+                    <TextBox x:Name="tb_statrttime_hour" Width="30" MaxLength="2" TextChanged="textBox_TextChanged" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsEnabled="False"/>
+                    <Label Content=":"/>
+                    <TextBox x:Name="tb_statrttime_min" Width="30" MaxLength="2" TextChanged="textBox_TextChanged" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsEnabled="False"/>
+                    <Label Content="(Spain Time)"/>
+                </StackPanel>
+            </RadioButton>
         </StackPanel>
         <StackPanel Grid.Row="2" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
             <TextBox x:Name="tb_duration_hour" Width="30" Text="1" MaxLength="2" TextChanged="textBox_TextChanged" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
