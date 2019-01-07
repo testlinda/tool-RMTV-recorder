@@ -19,10 +19,17 @@ namespace RMTV_recorder
     /// </summary>
     public partial class Info_UC : ucCustom
     {
+        private string release_version = "";
         public Info_UC()
         {
             InitializeComponent();
-            label_version.Content = Parameter._version;
+
+#if DEBUG
+            release_version = "Debug";
+#else
+            release_version = "Release";
+#endif
+            label_version.Content = Parameter._version + " (" + release_version + ")";
             label_author.Content = Parameter._author;
         }
     }
