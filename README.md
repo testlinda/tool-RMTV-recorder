@@ -1,5 +1,9 @@
 # RMTV-recorder
 
+## Notice
+
+This is a project just for practice.
+
 ## Feature
 
  - Record RMTV live stream at any time
@@ -10,7 +14,7 @@
  
  ## Requuirement
  
- - Windows
+ - Windows 7/10
  - .Net Framework above 4.5.2
  
  
