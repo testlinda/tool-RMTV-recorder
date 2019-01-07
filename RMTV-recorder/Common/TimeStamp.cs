@@ -14,7 +14,7 @@ namespace RMTV_recorder
 
         public string GetTimeStamp()
         {
-            return DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss-fff");
+            return DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss-fff");
         }
     }
 }

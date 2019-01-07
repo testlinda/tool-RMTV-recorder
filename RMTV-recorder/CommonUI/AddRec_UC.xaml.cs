@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -127,6 +128,18 @@ namespace RMTV_recorder
             return CommonFunc.ConvertDateTime2Spain(DateTime.Now);
         }
 
+        private DateTime SetSpainTime(int hour, int minute)
+        {
+            DateTime dateSpain = GetSpainTime();
+            DateTime dateSpainReset = dateSpain.AddHours(dateSpain.Hour * (-1))
+                                               .AddMinutes(dateSpain.Minute * (-1))
+                                               .AddSeconds(dateSpain.Second * (-1))
+                                               .AddMilliseconds(dateSpain.Millisecond * (-1));
+
+            DateTime dateSet = dateSpainReset.AddHours(hour).AddMinutes(minute);
+            return dateSet;
+        }
+
         private int CalculateDuration2min()
         {
             if (tb_duration_hour.Text.Equals("") ||
@@ -169,9 +182,8 @@ namespace RMTV_recorder
             }
             else
             {
-                date = DateTime.Today
-                .AddHours(int.Parse(tb_statrttime_hour.Text))
-                .AddMinutes(int.Parse(tb_statrttime_min.Text));
+                date = SetSpainTime(int.Parse(tb_statrttime_hour.Text),
+                                    int.Parse(tb_statrttime_min.Text));
             }
 
             return date;

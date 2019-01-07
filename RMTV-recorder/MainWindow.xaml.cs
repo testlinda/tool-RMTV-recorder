@@ -499,9 +499,12 @@ namespace RMTV_recorder
                 for (int i = 0; i < dgRecObj.SelectedItems.Count; i++)
                 {
                     RecObj recObj = (RecObj)dgRecObj.SelectedItems[i];
-                    recObj.Ffmpeg.StopRecord();
-                    recObj.Status = RecObj.RecordStatus.Completed;
-                    CommonFunc.RaiseStatusChangedFlag();
+                    if (recObj.Status == RecObj.RecordStatus.Recording)
+                    {
+                        recObj.Ffmpeg.StopRecord();
+                        recObj.Status = RecObj.RecordStatus.Completed;
+                        CommonFunc.RaiseStatusChangedFlag();
+                    }
                 };
             }
         }

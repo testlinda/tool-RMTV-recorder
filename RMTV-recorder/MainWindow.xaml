@@ -216,8 +216,20 @@
 
                             <DataGridTextColumn Header="#" Binding="{Binding Index}" Width="10" />
                             <DataGridTextColumn  Header="Language" Binding="{Binding Language}" Width="Auto"/>
-                            <DataGridTextColumn Header="Start Time" Binding="{Binding StartTime,StringFormat='HH:mm:ss'}" Width="70"/>
-                            <DataGridTextColumn Header="End Time" Binding="{Binding EndTime, StringFormat='HH:mm:ss'}" Width="70"/>
+                            <DataGridTextColumn Header="Start Time" Binding="{Binding StartTime,StringFormat='HH:mm:ss'}" Width="70">
+                                <DataGridTextColumn.CellStyle>
+                                    <Style TargetType="DataGridCell">
+                                        <Setter Property="ToolTip" Value="{Binding StartTime, StringFormat='yyyy-MM-dd HH:mm:ss'}" />
+                                    </Style>
+                                </DataGridTextColumn.CellStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="End Time" Binding="{Binding EndTime, StringFormat='HH:mm:ss'}" Width="70">
+                                <DataGridTextColumn.CellStyle>
+                                    <Style TargetType="DataGridCell">
+                                        <Setter Property="ToolTip" Value="{Binding EndTime, StringFormat='yyyy-MM-dd HH:mm:ss'}" />
+                                    </Style>
+                                </DataGridTextColumn.CellStyle>
+                            </DataGridTextColumn>
                             <DataGridTextColumn Header="Duration" Binding="{Binding Duration , StringFormat={}{0} min}" Width="70"/>
                             <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="*"/>
                             <DataGridTemplateColumn Header="Log" Width="30">
