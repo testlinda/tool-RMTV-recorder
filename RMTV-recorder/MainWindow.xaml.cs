@@ -292,10 +292,12 @@ namespace RMTV_recorder
             if (isManuallyRecording)
             {
                 RecordVideo();
+                StartCheckManualRecordAlive();
                 System.Threading.Thread.Sleep(1000);
             }
             else
             {
+                StopCheckManualRecordAlive();
                 StopRecordVideo();
                 System.Threading.Thread.Sleep(1000);
             }
@@ -306,7 +308,6 @@ namespace RMTV_recorder
             if (isManuallyRecording)
             {
                 SetRecordButton(RecordButtonStatus.isRecording);
-                StartCheckManualRecordAlive();
             }
             else
             {
@@ -318,7 +319,7 @@ namespace RMTV_recorder
         private void RecordVideo()
         {
             ffmpeg_manual = new FFmpeg();
-            ffmpeg_manual.StartRecord(true, _selectedLang_manual.Equals(Parameter.Language_Spanish ));
+            ffmpeg_manual.StartRecord(_selectedLang_manual.Equals(Parameter.Language_Spanish ));
         }
 
         private void StopRecordVideo()
@@ -376,6 +377,8 @@ namespace RMTV_recorder
             wincustom.winContent = log_uc;
             wincustom.Title = "Log";
             wincustom.Topmost = true;
+            wincustom.Owner = this;
+            wincustom.WindowStartupLocation = WindowStartupLocation.CenterOwner;
             wincustom.ShowInTaskbar = false;
             wincustom.ShowDialog();
         }
@@ -432,13 +435,20 @@ namespace RMTV_recorder
             wincustom.winContent = info_uc;
             wincustom.Title = "Information";
             wincustom.Topmost = true;
+            wincustom.Owner = this;
+            wincustom.WindowStartupLocation = WindowStartupLocation.CenterOwner;
             wincustom.ShowInTaskbar = false;
             wincustom.ShowDialog();
         }
 
         private void TV_MouseDown(object sender, MouseButtonEventArgs e)
         {
+            MessageBox.Show("This function hasn't done yet!");
+        }
 
+        private void TimeTable_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            System.Diagnostics.Process.Start(Parameter.uri_RMTV_es);
         }
 
         static void UserControl_CloseDialog(object sender, bool bApply, EventArgs e)
@@ -455,6 +465,8 @@ namespace RMTV_recorder
             wincustom.winContent = addRec_uc;
             wincustom.Title = "Schedule a recording";
             wincustom.Topmost = true;
+            wincustom.Owner = this;
+            wincustom.WindowStartupLocation = WindowStartupLocation.CenterOwner;
             wincustom.ShowInTaskbar = false;
 
             if (wincustom.ShowDialog() == true)
@@ -477,6 +489,11 @@ namespace RMTV_recorder
                 for (int i = 0; i < dgRecObj.SelectedItems.Count; i++)
                 {
                     RecObj recObj = (RecObj)dgRecObj.SelectedItems[i];
+
+                    if (recObj.Status == RecObj.RecordStatus.Recording ||
+                        recObj.Status == RecObj.RecordStatus.Stopping)
+                        continue;                   
+
                     recObj.Task.CancelTask();
                     Global._groupRecObj.Remove(recObj);
                 };
@@ -501,9 +518,9 @@ namespace RMTV_recorder
                     RecObj recObj = (RecObj)dgRecObj.SelectedItems[i];
                     if (recObj.Status == RecObj.RecordStatus.Recording)
                     {
-                        recObj.Ffmpeg.StopRecord();
-                        recObj.Status = RecObj.RecordStatus.Completed;
+                        recObj.Status = RecObj.RecordStatus.Stopping;
                         CommonFunc.RaiseStatusChangedFlag();
+                        recObj.Ffmpeg.StopRecord();
                     }
                 };
             }

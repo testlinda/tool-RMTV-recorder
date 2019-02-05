@@ -12,6 +12,7 @@ namespace RMTV_recorder
         {
             Scheduled,
             Recording,
+            Stopping,
             Completed,
             Failed
         }
@@ -26,18 +27,32 @@ namespace RMTV_recorder
         public string Log { get; set; }
         public FFmpeg Ffmpeg { get; set; }
         public ScheduledTask Task { get; set; }
+        public string StrStartTime { get; set; }
+        public string StrEndTime { get; set; }
 
         public RecObj()
         {
             
         }
 
-        public void Initialation()
+        public void Initialization()
         {
             Ffmpeg = new FFmpeg();
-            Task = new ScheduledTask(CommonFunc.ConvertDateTime2Local(StartTime), 
-                                     RecordVideo);
+            Task = new ScheduledTask(CommonFunc.ConvertDateTime2Local(StartTime), RecordVideo);
             Task.ArrangeTask();
+            StrStartTime = GetStrDateTime(StartTime);
+            StrEndTime = GetStrDateTime(EndTime);
+        }
+
+        public string GetStrDateTime(DateTime datetime)
+        {
+            string strFormat = "yyyy/MM/dd a\\t HH:mm:ss";
+            string strTime = String.Concat("Spain:\t", 
+                                           datetime.ToString(strFormat),
+                                           "\r\n",
+                                           "Local:\t",
+                                           CommonFunc.ConvertDateTime2Local(datetime).ToString(strFormat));
+            return strTime;
         }
 
         private void RecordVideo()
@@ -50,8 +65,9 @@ namespace RMTV_recorder
             Status = RecordStatus.Recording;
             CommonFunc.RaiseStatusChangedFlag();
 
-            Ffmpeg.StartRecord(false, (Language.Equals(Parameter.Language_Spanish)), Duration * 60);
+            Ffmpeg.StartRecord((Language.Equals(Parameter.Language_Spanish)), Duration * 60);
 
+            //System.Threading.Thread.Sleep(3000);
             Status = (Ffmpeg.CheckFIleExist()) ? RecordStatus.Completed : RecordStatus.Failed;
             CommonFunc.RaiseStatusChangedFlag();
         }

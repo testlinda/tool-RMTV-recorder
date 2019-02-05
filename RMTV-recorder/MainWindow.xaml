@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:RMTV_recorder"
         mc:Ignorable="d"
-        Height="550" Width="500"
+        Height="550" Width="520"
         ResizeMode="CanMinimize"
         StateChanged ="Window_StateChanged"
         Icon="Resource/icon.ico" >
@@ -33,6 +33,8 @@
                 <ColumnDefinition Width="10" />
                 <ColumnDefinition Width="60" />
                 <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="30" />
+                <ColumnDefinition Width="10" />
             </Grid.ColumnDefinitions>
             <Grid Grid.Row="1" Grid.Column="1" 
                   Background="OldLace">
@@ -56,11 +58,14 @@
                 </StackPanel>
                 <Label Grid.Column="1" x:Name="label_time_local" Content="--" Foreground="Salmon" FontSize="18" VerticalAlignment="Center"/>
             </Grid>
-            <Grid Grid.Row="1" Grid.Column="5" Background="LightSalmon">
+            <Grid Grid.Row="1" Grid.Column="5" Background="LightSalmon" ToolTip="Watch RMTV">
                 <Image Source="/Resource/tv.png" Height="40" MouseDown="TV_MouseDown"/>
             </Grid>
-            <Grid Grid.Row="1" Grid.Column="7" Background="LightSalmon">
-                <Image Source="/Resource/info.png" Height="40" MouseDown="Information_MouseDown"/>
+            <Grid Grid.Row="1" Grid.Column="7" Background="LightSalmon" ToolTip="Time Table">
+                <Image Source="/Resource/timetable.png" Height="40" MouseDown="TimeTable_MouseDown"/>
+            </Grid>
+            <Grid Grid.Row="1" Grid.Column="9" Background="LightSalmon" ToolTip="Information">
+                <Image Source="/Resource/info.png" Width="20" MouseDown="Information_MouseDown"/>
             </Grid>
         </Grid>
         <!-- Record now -->
@@ -219,14 +224,14 @@
                             <DataGridTextColumn Header="Start Time" Binding="{Binding StartTime,StringFormat='HH:mm:ss'}" Width="70">
                                 <DataGridTextColumn.CellStyle>
                                     <Style TargetType="DataGridCell">
-                                        <Setter Property="ToolTip" Value="{Binding StartTime, StringFormat='yyyy-MM-dd HH:mm:ss'}" />
+                                        <Setter Property="ToolTip" Value="{Binding StrStartTime}" />
                                     </Style>
                                 </DataGridTextColumn.CellStyle>
                             </DataGridTextColumn>
                             <DataGridTextColumn Header="End Time" Binding="{Binding EndTime, StringFormat='HH:mm:ss'}" Width="70">
                                 <DataGridTextColumn.CellStyle>
                                     <Style TargetType="DataGridCell">
-                                        <Setter Property="ToolTip" Value="{Binding EndTime, StringFormat='yyyy-MM-dd HH:mm:ss'}" />
+                                        <Setter Property="ToolTip" Value="{Binding StrEndTime}" />
                                     </Style>
                                 </DataGridTextColumn.CellStyle>
                             </DataGridTextColumn>

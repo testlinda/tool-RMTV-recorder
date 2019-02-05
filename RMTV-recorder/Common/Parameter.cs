@@ -8,7 +8,7 @@ namespace RMTV_recorder
 {
     class Parameter
     {
-        public static string _version = "1.1.3";
+        public static string _version = "1.2.0";
         public static string _author = "山腳下的小黑熊";
 
         public static string _windowTitle = "RMTV Recorder";
@@ -27,6 +27,8 @@ namespace RMTV_recorder
 
         public static string Language_Spanish = "Spanish";
         public static string Language_English = "English";
+
+        public static string uri_RMTV_es = @"https://www.realmadrid.com/real-madrid-tv";
 
         public static int delay_sec = 1;
     }

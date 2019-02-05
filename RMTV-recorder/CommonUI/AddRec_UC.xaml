@@ -5,9 +5,10 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:RMTV_recorder"
              mc:Ignorable="d" 
-             Height="200" Width="350" Background="OldLace">
+             Height="250" Width="350" Background="OldLace">
     <Grid Margin="10">
         <Grid.RowDefinitions>
+            <RowDefinition Height="40" />
             <RowDefinition Height="40" />
             <RowDefinition Height="40" />
             <RowDefinition Height="40" />
@@ -15,22 +16,26 @@
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="10" />
+            <ColumnDefinition Width="5" />
             <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
         <Label Grid.Row="0" Grid.Column="0" Content="Language" VerticalAlignment="Center" FontWeight="ExtraBold" Foreground="Salmon"/>
         <Label Grid.Row="1" Grid.Column="0" Content="Start Time" VerticalAlignment="Center" FontWeight="ExtraBold" Foreground="Salmon"/>
-        <Label Grid.Row="2" Grid.Column="0" Content="Duration" VerticalAlignment="Center" FontWeight="ExtraBold" Foreground="Salmon"/>
+        <Label Grid.Row="2" Grid.Column="0" Content="End Time" VerticalAlignment="Center" FontWeight="ExtraBold" Foreground="Salmon"/>
         <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-            <RadioButton GroupName="lang" x:Name="rb_lang_spanish" Content="Spanish" IsChecked="True"/>
+            <RadioButton GroupName="lang" x:Name="rb_lang_spanish" IsChecked="True" VerticalContentAlignment="Center">
+                <Label Content="Spanish"/>
+            </RadioButton>
             <Label Width="10"/>
-            <RadioButton GroupName="lang" Content="English" />
+            <RadioButton GroupName="lang" VerticalContentAlignment="Center">
+                <Label Content="English"/>
+            </RadioButton>
         </StackPanel>
         <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-            <RadioButton GroupName="time" x:Name="rb_starttime_now" IsChecked="True" VerticalContentAlignment="Center" Checked="RadioButton_Time_CheckedChanged">
+            <RadioButton GroupName="starttime" x:Name="rb_starttime_now" IsChecked="True" VerticalContentAlignment="Center" Checked="RadioButton_StartTime_CheckedChanged">
                 <Label Content="Now"/>
             </RadioButton>
-            <RadioButton GroupName="time" VerticalContentAlignment="Center" Checked="RadioButton_Time_CheckedChanged">
+            <RadioButton GroupName="starttime" VerticalContentAlignment="Center" Checked="RadioButton_StartTime_CheckedChanged">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <Label Content="At"/>
                     <TextBox x:Name="tb_statrttime_hour" Width="30" MaxLength="2" TextChanged="textBox_TextChanged" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsEnabled="False"/>
@@ -40,13 +45,25 @@
                 </StackPanel>
             </RadioButton>
         </StackPanel>
-        <StackPanel Grid.Row="2" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-            <TextBox x:Name="tb_duration_hour" Width="30" Text="1" MaxLength="2" TextChanged="textBox_TextChanged" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-            <Label Content="hour"/>
-            <TextBox x:Name="tb_duration_min" Width="30" Text="0" MaxLength="3" TextChanged="textBox_TextChanged" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-            <Label Content="minutes"/>
-        </StackPanel>
-        <StackPanel Grid.Row="3" Grid.Column="2" Margin="0,10" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+        <RadioButton Grid.Row="2" Grid.Column="2" GroupName="endtime" x:Name="rb_set_endtime" IsChecked="True" VerticalContentAlignment="Center" Checked="RadioButton_EndTime_CheckedChanged">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Label Content="At"/>
+                <TextBox x:Name="tb_endtime_hour" Width="30" MaxLength="2" TextChanged="textBox_TextChanged" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                <Label Content=":"/>
+                <TextBox x:Name="tb_endtime_min" Width="30" MaxLength="2" TextChanged="textBox_TextChanged" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                <Label Content="(Spain Time)"/>
+            </StackPanel>
+        </RadioButton>
+        <RadioButton Grid.Row="3" Grid.Column="2" GroupName="endtime" VerticalContentAlignment="Center" Checked="RadioButton_EndTime_CheckedChanged">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Label Content="Or duration"/>
+                <TextBox x:Name="tb_duration_hour" Width="30" MaxLength="2" TextChanged="textBox_TextChanged" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsEnabled="False"/>
+                <Label Content="hour"/>
+                <TextBox x:Name="tb_duration_min" Width="30" MaxLength="3" TextChanged="textBox_TextChanged" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsEnabled="False"/>
+                <Label Content="minutes"/>
+            </StackPanel>
+        </RadioButton>
+        <StackPanel Grid.Row="4" Grid.Column="2" Margin="0,10" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
             <Button Content="Cancel" Height="30" Width="60" Background="Transparent" Click="Button_Close_Click"/>
             <Label Width="10"/>
             <Button Content="Confirm" Height="30" Width="60" Background="Salmon" Click="Button_Confirm_Click"/>

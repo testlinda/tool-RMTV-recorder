@@ -11,34 +11,37 @@ namespace RMTV_recorder
     public class FFmpeg
     {
         private Process _process = null;
-        //private string _log = string.Empty;
         private List<string> _log = null;
         private string _fileName = string.Empty;
+        private bool _isManaul = true;
 
         public FFmpeg()
         {
             _log = new List<string>();
         }
 
-        public void StartRecord(bool isManaul, bool language)
+        public void StartRecord(bool language)
         {
+            _isManaul = true;
             string arguments = String.Concat("-hide_banner -protocol_whitelist \"concat,file,subfile,http,https,tls,rtp,tcp,udp,crypto\" -i \"",
                                            (language ? Parameter._m3u8_es_Path : Parameter._m3u8_en_Path),
                                            "\"", " -c copy ", 
-                                           "\"", Parameter._outputPath, "\\", GetOutputFileName(language, isManaul), "\"");
-            Debug.WriteLine(arguments);
+                                           "\"", Parameter._outputPath, "\\", GetOutputFileName(language, true), "\"");
+            //Debug.WriteLine(arguments);
             RecordVideo(arguments);
         }
 
-        public void StartRecord(bool isManaul, bool language, int duration)
+        public void StartRecord(bool language, int duration)
         {
+            _isManaul = false;
             string arguments = String.Concat("-hide_banner -protocol_whitelist \"concat,file,subfile,http,https,tls,rtp,tcp,udp,crypto\" -i \"",
                                (language ? Parameter._m3u8_es_Path : Parameter._m3u8_en_Path),
                                "\"", " -t ", duration,
                                " -c copy ",
-                               "\"", Parameter._outputPath, "\\", GetOutputFileName(language, isManaul), "\"");
-            Debug.WriteLine(arguments);
+                               "\"", Parameter._outputPath, "\\", GetOutputFileName(language, false), "\"");
+            //Debug.WriteLine(arguments);
             RecordVideo(arguments);
+
             _process.WaitForExit();
         }
 
@@ -70,6 +73,7 @@ namespace RMTV_recorder
                 if(!SendCtrlCKey())
                 {
                     _process.Kill();
+                    Debug.WriteLine("process is killed!");
                 }
             }
         }
@@ -106,7 +110,10 @@ namespace RMTV_recorder
                 {
                     if (!GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0))
                         return false;
-                    _process.WaitForExit();
+
+                    System.Threading.Thread.Sleep(100);
+                    if (_isManaul)
+                        _process.WaitForExit();
                 }
                 finally
                 {
@@ -126,7 +133,6 @@ namespace RMTV_recorder
 
         private void EventErrorDataReceived(object sender, DataReceivedEventArgs e)
         {
-            //_log += e.Data + "\n";
             _log.Add(e.Data);
             if (_log.Count > 100)
             {

@@ -30,7 +30,7 @@ namespace RMTV_recorder
 
         private void Initializaton()
         {
-
+            InitailEndTime();
         }
 
         private void Button_Close_Click(object sender, RoutedEventArgs e)
@@ -59,15 +59,23 @@ namespace RMTV_recorder
                     Log = "",
                 };
 
-                recObj.Initialation();
+                recObj.Initialization();
                 Global._groupRecObj.Add(recObj);
                 base.OnCloseDialog(this, true, e);
             }
         }
 
-        
-
         private bool CheckData()
+        {
+            if (!IsStartTimeDataAcceptable() ||
+                !IsEndTimeDataAcceptable() ||
+                !IsDurationDataAcceptable())
+                return false;
+
+            return true;
+        }
+
+        private bool IsStartTimeDataAcceptable()
         {
             if (rb_starttime_now.IsChecked == false)
             {
@@ -87,41 +95,71 @@ namespace RMTV_recorder
                     }
                 }
 
-                if (IsPreviousTime())
+                DateTime date = GetStartTime();
+                DateTime date_now = GetSpainTime(); //Time of Spain
+
+                if (IsPreviousTime(date, date_now))
                 {
                     MessageBox.Show("The Start time is set at the past.", "Error");
                     return false;
                 }
             }
 
-            if (tb_duration_hour.Text.Equals("") ||
-                tb_duration_min.Text.Equals(""))
-            {
-                MessageBox.Show("Duration is invalid.", "Error");
-                return false;
-            }
+            return true;
+        }
 
-            if (CalculateDuration2min() < 1)
+        private bool IsEndTimeDataAcceptable()
+        {
+            if (rb_set_endtime.IsChecked == true)
             {
-                MessageBox.Show("Duration is too short.", "Error");
-                return false;
+                if (tb_endtime_hour.Text.Equals("") ||
+                    tb_endtime_min.Text.Equals(""))
+                {
+                    MessageBox.Show("End time is invalid.", "Error");
+                    return false;
+                }
+                else
+                {
+                    if (int.Parse(tb_endtime_hour.Text) > 23 ||
+                        int.Parse(tb_endtime_min.Text) > 59)
+                    {
+                        MessageBox.Show("End time is invalid.", "Error");
+                        return false;
+                    }
+                }
             }
 
             return true;
         }
 
-        private bool IsPreviousTime()
+        private bool IsDurationDataAcceptable()
         {
-            DateTime date = DateTime.Today
-                .AddHours(int.Parse(tb_statrttime_hour.Text))
-                .AddMinutes(int.Parse(tb_statrttime_min.Text));
-            DateTime date_now = GetSpainTime(); //Time of Spain
+            if (rb_set_endtime.IsChecked == false)
+            {
+                if (tb_duration_hour.Text.Equals("") ||
+                tb_duration_min.Text.Equals(""))
+                {
+                    MessageBox.Show("Duration is invalid.", "Error");
+                    return false;
+                }
 
-            if (DateTime.Compare(date, date_now) <= 0)
+                if (CalculateDuration2min() < 1)
+                {
+                    MessageBox.Show("Duration is too short.", "Error");
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private bool IsPreviousTime(DateTime time1, DateTime time2) //true, if time2 >= time1
+        {
+            if (DateTime.Compare(time1, time2) <= 0)
                 return true;
 
             return false;
-        }
+        }        
 
         private DateTime GetSpainTime()
         {
@@ -142,16 +180,19 @@ namespace RMTV_recorder
 
         private int CalculateDuration2min()
         {
-            if (tb_duration_hour.Text.Equals("") ||
-                tb_duration_min.Text.Equals(""))
+            int duration = 0;
+            if (rb_set_endtime.IsChecked == true)
             {
-                return 0;
+                TimeSpan ts = GetEndTime() - GetStartTime();
+                double differenceInMinutes = ts.TotalMinutes;
+                duration = (int)differenceInMinutes;
+            }
+            else
+            {
+                duration = int.Parse(tb_duration_hour.Text) * 60 + int.Parse(tb_duration_min.Text);
             }
 
-            int duration_hour = int.Parse(tb_duration_hour.Text);
-            int duration_min = int.Parse(tb_duration_min.Text);
-
-            return duration_hour * 60 + duration_min;
+            return duration;
         }
 
         private int CalculateDuration2sec()
@@ -191,12 +232,36 @@ namespace RMTV_recorder
 
         private DateTime GetEndTime()
         {
-            return GetStartTime().AddSeconds(CalculateDuration2sec());
+            DateTime date;
+
+            if (rb_set_endtime.IsChecked == true)
+            {
+                date = SetSpainTime(int.Parse(tb_endtime_hour.Text),
+                                    int.Parse(tb_endtime_min.Text));
+
+                if (IsPreviousTime(date, GetStartTime()))
+                {
+                    date = date.AddDays(1);
+                    Console.WriteLine("date.AddDays(1): " + date);
+                }
+            }
+            else
+            {
+                date = GetStartTime().AddSeconds(CalculateDuration2sec()); ;
+            }
+
+            return date;
         }
 
         private int GetDuration()
         {
             return CalculateDuration2min();
+        }
+
+        private void InitailEndTime()
+        {
+            tb_endtime_hour.Text = GetSpainTime().AddHours(1).Hour.ToString("00");
+            tb_endtime_min.Text = GetSpainTime().Minute.ToString("00");
         }
 
         private void textBox_TextChanged(object sender, TextChangedEventArgs e)
@@ -216,7 +281,7 @@ namespace RMTV_recorder
             textBox.SelectionStart = selectionStart <= textBox.Text.Length ? selectionStart : textBox.Text.Length;
         }
 
-        private void RadioButton_Time_CheckedChanged(object sender, RoutedEventArgs e)
+        private void RadioButton_StartTime_CheckedChanged(object sender, RoutedEventArgs e)
         {
             if (tb_statrttime_hour == null || tb_statrttime_min == null)
                 return;
@@ -225,6 +290,31 @@ namespace RMTV_recorder
             tb_statrttime_min.IsEnabled = !(rb_starttime_now.IsChecked == true);
             tb_statrttime_hour.Text = !(rb_starttime_now.IsChecked == true)? "11":"";
             tb_statrttime_min.Text = !(rb_starttime_now.IsChecked == true) ? "00" : "";
+        }
+
+        private void RadioButton_EndTime_CheckedChanged(object sender, RoutedEventArgs e)
+        {
+            if (tb_endtime_hour == null || tb_endtime_min == null ||
+                tb_duration_hour == null || tb_duration_min == null)
+                return;
+
+            if (rb_set_endtime.IsChecked == true)
+            {
+                InitailEndTime();
+            }
+            else
+            {
+                tb_endtime_hour.Text = "";
+                tb_endtime_min.Text = "";
+            }
+            
+            tb_endtime_hour.IsEnabled = (rb_set_endtime.IsChecked == true);
+            tb_endtime_min.IsEnabled = (rb_set_endtime.IsChecked == true);
+           
+            tb_duration_hour.IsEnabled = !(rb_set_endtime.IsChecked == true);
+            tb_duration_min.IsEnabled = !(rb_set_endtime.IsChecked == true);
+            tb_duration_hour.Text = !(rb_set_endtime.IsChecked == true) ? "0" : "";
+            tb_duration_min.Text = !(rb_set_endtime.IsChecked == true) ? "1" : "";
         }
     }
 }
