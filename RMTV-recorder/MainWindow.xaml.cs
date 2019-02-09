@@ -393,6 +393,7 @@ namespace RMTV_recorder
                     MessageBoxButton.YesNo) != MessageBoxResult.Yes)
                 {
                     cancelEventArgs.Cancel = true;
+                    return;
                 }
                 else
                 {

@@ -313,8 +313,8 @@ namespace RMTV_recorder
            
             tb_duration_hour.IsEnabled = !(rb_set_endtime.IsChecked == true);
             tb_duration_min.IsEnabled = !(rb_set_endtime.IsChecked == true);
-            tb_duration_hour.Text = !(rb_set_endtime.IsChecked == true) ? "0" : "";
-            tb_duration_min.Text = !(rb_set_endtime.IsChecked == true) ? "1" : "";
+            tb_duration_hour.Text = !(rb_set_endtime.IsChecked == true) ? "1" : "";
+            tb_duration_min.Text = !(rb_set_endtime.IsChecked == true) ? "0" : "";
         }
     }
 }
