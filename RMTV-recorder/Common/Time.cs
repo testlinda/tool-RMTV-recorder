@@ -49,7 +49,7 @@ namespace RMTV_recorder
             }
             else
             {
-                timer = new Timer(1000);
+                timer = new Timer();
                 timer.Elapsed += new ElapsedEventHandler(OnClockEvent);
                 timer.Interval = 1000;
                 timer.Enabled = true;
@@ -84,7 +84,7 @@ namespace RMTV_recorder
             }
             else
             {
-                timer = new Timer(1000);
+                timer = new Timer();
                 timer.Elapsed += new ElapsedEventHandler(OnTimerEvent);
                 timer.Interval = 1000;
                 timer.Enabled = true;

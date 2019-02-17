@@ -94,15 +94,6 @@ namespace RMTV_recorder
                         return false;
                     }
                 }
-
-                DateTime date = GetStartTime();
-                DateTime date_now = GetSpainTime(); //Time of Spain
-
-                if (IsPreviousTime(date, date_now))
-                {
-                    MessageBox.Show("The Start time is set at the past.", "Error");
-                    return false;
-                }
             }
 
             return true;
@@ -125,6 +116,16 @@ namespace RMTV_recorder
                     {
                         MessageBox.Show("End time is invalid.", "Error");
                         return false;
+                    }
+
+                    if (GetStartTime().Day > GetSpainTime().Day)
+                    {
+                        if (int.Parse(tb_endtime_hour.Text) * 100 + int.Parse(tb_endtime_min.Text) <=
+                            int.Parse(tb_statrttime_hour.Text) * 100 + int.Parse(tb_statrttime_hour.Text))
+                        {
+                            MessageBox.Show("End time is set eailer than start time.", "Error");
+                            return false;
+                        }
                     }
                 }
             }
@@ -225,6 +226,11 @@ namespace RMTV_recorder
             {
                 date = SetSpainTime(int.Parse(tb_statrttime_hour.Text),
                                     int.Parse(tb_statrttime_min.Text));
+
+                if (IsPreviousTime(date, GetSpainTime()))
+                {
+                    date = date.AddDays(1);
+                }
             }
 
             return date;
@@ -242,7 +248,6 @@ namespace RMTV_recorder
                 if (IsPreviousTime(date, GetStartTime()))
                 {
                     date = date.AddDays(1);
-                    Console.WriteLine("date.AddDays(1): " + date);
                 }
             }
             else

@@ -332,7 +332,7 @@ namespace RMTV_recorder
 
         private void StartCheckManualRecordAlive()
         {
-            timer_manualrecord_checkalive = new Timer(timer_manualrecord_checkalive_interval_sec * 1000);
+            timer_manualrecord_checkalive = new Timer();
             timer_manualrecord_checkalive.Elapsed += new ElapsedEventHandler(OnCheckAliveEvent);
             timer_manualrecord_checkalive.Interval = timer_manualrecord_checkalive_interval_sec * 1000;
             timer_manualrecord_checkalive.Enabled = true;
@@ -529,7 +529,7 @@ namespace RMTV_recorder
 
         private void StartRefreshDataGrid()
         {
-            timer_refreshdg = new Timer(timer_refreshdg_interval_sec * 1000);
+            timer_refreshdg = new Timer();
             timer_refreshdg.Elapsed += new ElapsedEventHandler(OnRefreshEvent);
             timer_refreshdg.Interval = timer_refreshdg_interval_sec * 1000;
             timer_refreshdg.Enabled = true;
@@ -576,7 +576,9 @@ namespace RMTV_recorder
         {
             foreach (RecObj obj in Global._groupRecObj)
             {
-                if (obj.Status == RecObj.RecordStatus.Scheduled || obj.Status == RecObj.RecordStatus.Recording)
+                if (obj.Status == RecObj.RecordStatus.Recording || 
+                    obj.Status == RecObj.RecordStatus.Scheduled ||
+                    obj.Status == RecObj.RecordStatus.Stopping)
                 {
                     return false;
                 }

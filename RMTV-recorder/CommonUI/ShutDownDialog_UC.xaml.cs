@@ -82,7 +82,7 @@ namespace RMTV_recorder
 
         private void DisplayCountDownTime()
         {
-            _timer_countdown = new Timer(1000);
+            _timer_countdown = new Timer();
             _timer_countdown.Elapsed += new ElapsedEventHandler(OnTimerEvent);
             _timer_countdown.Interval = 1000;
             _timer_countdown.Enabled = true;
