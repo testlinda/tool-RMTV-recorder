@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -20,6 +21,8 @@ namespace RMTV_recorder
     public partial class Info_UC : ucCustom
     {
         private string release_version = "";
+        private int click_count = 0;
+
         public Info_UC()
         {
             InitializeComponent();
@@ -29,8 +32,51 @@ namespace RMTV_recorder
 #else
             release_version = "Release";
 #endif
-            label_version.Content = Parameter._version + " (" + release_version + ")";
-            label_author.Content = Parameter._author;
+            label_version.Content = GetVersion() + " (" + release_version + ")";
+            label_author.Content = GetCopyright();
+        }
+
+        private string GetVersion()
+        {
+            Assembly assembly = Assembly.GetExecutingAssembly();
+            object[] obj = assembly.GetCustomAttributes(false);
+            foreach (object o in obj)
+            {
+                if (o.GetType() == typeof(System.Reflection.AssemblyFileVersionAttribute))
+                {
+                    AssemblyFileVersionAttribute ava = (AssemblyFileVersionAttribute)o;
+                    return ava.Version;
+                }
+            }
+            return string.Empty;
+        }
+
+        private string GetCopyright()
+        {
+            Assembly assembly = Assembly.GetExecutingAssembly();
+            object[] obj = assembly.GetCustomAttributes(false);
+            foreach (object o in obj)
+            {
+                if (o.GetType() == typeof(System.Reflection.AssemblyCopyrightAttribute))
+                {
+                    AssemblyCopyrightAttribute aca = (AssemblyCopyrightAttribute)o;
+                    return aca.Copyright;
+                }
+            }
+            return string.Empty;
+        }
+
+        private void page_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            click_count++;
+
+            if (click_count == Parameter.debug_on_click)
+            {
+                Parameter._debugmode = !Parameter._debugmode;
+                CommonFunc.ToastMessage(label_message, 
+                                        String.Format("Debug mode is {0}!", Parameter._debugmode ? "ON" : "OFF"),
+                                        2);
+            }
         }
     }
 }

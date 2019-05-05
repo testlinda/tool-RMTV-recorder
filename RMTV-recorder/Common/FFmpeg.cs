@@ -26,19 +26,19 @@ namespace RMTV_recorder
             string arguments = String.Concat("-hide_banner -protocol_whitelist \"concat,file,subfile,http,https,tls,rtp,tcp,udp,crypto\" -i \"",
                                            (language ? Parameter._m3u8_es_Path : Parameter._m3u8_en_Path),
                                            "\"", " -c copy ", 
-                                           "\"", Parameter._outputPath, "\\", GetOutputFileName(language, true), "\"");
+                                           "\"", Parameter._outputPath, "\\", GetOutputFileName(language, true, 0), "\"");
             //Debug.WriteLine(arguments);
             RecordVideo(arguments);
         }
 
-        public void StartRecord(bool language, int duration)
+        public void StartRecord(bool language, int duration, int retry_times)
         {
             _isManaul = false;
             string arguments = String.Concat("-hide_banner -protocol_whitelist \"concat,file,subfile,http,https,tls,rtp,tcp,udp,crypto\" -i \"",
                                (language ? Parameter._m3u8_es_Path : Parameter._m3u8_en_Path),
                                "\"", " -t ", duration,
                                " -c copy ",
-                               "\"", Parameter._outputPath, "\\", GetOutputFileName(language, false), "\"");
+                               "\"", Parameter._outputPath, "\\", GetOutputFileName(language, false, retry_times), "\"");
             //Debug.WriteLine(arguments);
             RecordVideo(arguments);
 
@@ -72,8 +72,13 @@ namespace RMTV_recorder
             {
                 if(!SendCtrlCKey())
                 {
-                    _process.Kill();
-                    Debug.WriteLine("process is killed!");
+                    //_process.Kill();
+                    _log.Add("Send Ctrl+C failed.");
+                    Debug.WriteLine("Send Ctrl+C failed.");
+                }
+                else
+                {
+                    _log.Add("Send Ctrl+C successfully.");
                 }
             }
         }
@@ -150,7 +155,7 @@ namespace RMTV_recorder
             return false;
         }
 
-        private string GetOutputFileName(bool language, bool isManaul)
+        private string GetOutputFileName(bool language, bool isManaul, int retry_times)
         {
             TimeStamp stamp = new TimeStamp();
             _fileName =  string.Concat("rmtv-record_", 
@@ -159,6 +164,7 @@ namespace RMTV_recorder
                                        stamp.GetTimeStamp(), 
                                        "_",
                                        (isManaul ? "manual" : "scheduled"),
+                                       (retry_times!=0 ? string.Format("(reconnected{0:D2})", retry_times) : ""),
                                        ".mp4");
             return _fileName;
         }

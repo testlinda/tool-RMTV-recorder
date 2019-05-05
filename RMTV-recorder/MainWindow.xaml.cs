@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -29,8 +30,8 @@ namespace RMTV_recorder
         private FFmpeg ffmpeg_manual = null;
         private Clock timer_manual = null;
         private string _selectedLang_manual = Parameter.Language_Spanish ;
+        private int timer_refreshdg_interval_sec = 60;
         private Timer timer_refreshdg = null;
-        private int timer_refreshdg_interval_sec = 2;
         private Timer timer_manualrecord_checkalive = null;
         private int timer_manualrecord_checkalive_interval_sec = 2;
 
@@ -58,8 +59,10 @@ namespace RMTV_recorder
                 return false;
             }
 
-            test();
-
+#if DEBUG
+            AddTestItems();
+#endif
+            RefreshDebugMode();
             DisplayClock();
             InitialOutputFolder();
             InitialRecordButton();
@@ -67,7 +70,8 @@ namespace RMTV_recorder
             InitialRecording();
             InitialNotifyIcon();
 
-            Global._groupRecObj = new List<RecObj>();
+            Global._groupRecObj = new ObservableCollection<RecObj>();
+            BindingOperations.EnableCollectionSynchronization(Global._groupRecObj, Global._syncLock);
             dgRecObj.ItemsSource = Global._groupRecObj;
             Closing += OnClosing;
 
@@ -86,9 +90,24 @@ namespace RMTV_recorder
             return false;
         }
 
+        private void AddTestItems()
+        {
+            MenuItem menu_test = new MenuItem();
+            menu_test.Header = "Test";
+            menu_test.Click += btn_test_Click;
+
+            menu_debug.Items.Add(menu_test);
+        }
+
+        private void RefreshDebugMode()
+        {
+            btn_debug.Visibility = (Parameter._debugmode) ? Visibility.Visible : Visibility.Collapsed;
+
+        }
+
         private void DisplayClock()
         {
-            Clock timer_local = new Clock(this, label_time_local, true);
+            Clock timer_local = new Clock(this, label_time_local);
             timer_local.StartClock();
             Clock timer_spain = new Clock(this, label_time_spain, Parameter._timezoneIdSpain);
             timer_spain.StartClock();
@@ -428,7 +447,7 @@ namespace RMTV_recorder
             }
         }
 
-        private void Information_MouseDown(object sender, MouseButtonEventArgs e)
+        private void Information_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
             winCustom wincustom = new winCustom();
             Info_UC info_uc = new Info_UC();
@@ -440,14 +459,16 @@ namespace RMTV_recorder
             wincustom.WindowStartupLocation = WindowStartupLocation.CenterOwner;
             wincustom.ShowInTaskbar = false;
             wincustom.ShowDialog();
+
+            RefreshDebugMode();
         }
 
-        private void TV_MouseDown(object sender, MouseButtonEventArgs e)
+        private void TV_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
             MessageBox.Show("This function hasn't done yet!");
         }
 
-        private void TimeTable_MouseDown(object sender, MouseButtonEventArgs e)
+        private void TimeTable_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
             System.Diagnostics.Process.Start(Parameter.uri_RMTV_es);
         }
@@ -472,7 +493,6 @@ namespace RMTV_recorder
 
             if (wincustom.ShowDialog() == true)
             {
-                dgRecObj.Items.Refresh();
 
                 if (dgRecObj.Items.Count == 1)
                 {
@@ -496,7 +516,7 @@ namespace RMTV_recorder
                         continue;                   
 
                     recObj.Task.CancelTask();
-                    Global._groupRecObj.Remove(recObj);
+                    CommonFunc.RemoveRecObj(recObj);
                 };
             }
 
@@ -507,7 +527,6 @@ namespace RMTV_recorder
             }
 
             RefreshRecObjIndex();
-            dgRecObj.Items.Refresh();
         }
 
         private void btn_stopRec_Click(object sender, RoutedEventArgs e)
@@ -519,8 +538,8 @@ namespace RMTV_recorder
                     RecObj recObj = (RecObj)dgRecObj.SelectedItems[i];
                     if (recObj.Status == RecObj.RecordStatus.Recording)
                     {
+                        recObj.IsStoppedManually = true;
                         recObj.Status = RecObj.RecordStatus.Stopping;
-                        CommonFunc.RaiseStatusChangedFlag();
                         recObj.Ffmpeg.StopRecord();
                     }
                 };
@@ -569,15 +588,15 @@ namespace RMTV_recorder
                     }
                 }
             }
-            
+
         }
 
         private bool IsAllSceduleCompleted()
         {
             foreach (RecObj obj in Global._groupRecObj)
             {
-                if (obj.Status == RecObj.RecordStatus.Recording || 
-                    obj.Status == RecObj.RecordStatus.Scheduled ||
+                if (obj.Status == RecObj.RecordStatus.Scheduled || 
+                    obj.Status == RecObj.RecordStatus.Recording ||
                     obj.Status == RecObj.RecordStatus.Stopping)
                 {
                     return false;
@@ -586,22 +605,23 @@ namespace RMTV_recorder
             return true;
         }
 
-        private void btn_test1_Click(object sender, RoutedEventArgs e)
+        private void btn_ctrlC_Click(object sender, RoutedEventArgs e)
         {
-
-        }
-
-        private void btn_test2_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
-
-        private void test()
-        {
-            if (!File.Exists(Parameter._testfile_Path))
+            if (dgRecObj.SelectedItems.Count > 0)
             {
-                stackpanel_test.Visibility = Visibility.Collapsed;
+                for (int i = 0; i < dgRecObj.SelectedItems.Count; i++)
+                {
+                    RecObj recObj = (RecObj)dgRecObj.SelectedItems[i];
+                    recObj.IsStoppedManually = true;
+                    recObj.Status = RecObj.RecordStatus.Stopping;
+                    recObj.Ffmpeg.StopRecord();
+                };
             }
+        }
+
+        private void btn_updateM3U8_Click(object sender, RoutedEventArgs e)
+        {
+            CommonFunc.UpdateM3U8();
         }
 
         private void RefreshRecObjIndex()
@@ -628,6 +648,9 @@ namespace RMTV_recorder
             wincustom.ShowDialog();
         }
 
-        
+        private void btn_test_Click(object sender, RoutedEventArgs e)
+        {
+            CommonFunc.test();
+        }
     }
 }

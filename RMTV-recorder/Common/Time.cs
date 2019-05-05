@@ -17,7 +17,7 @@ namespace RMTV_recorder
         private Window _window = null;
         private Label _label = null;
 
-        private bool _isLocal = false;
+        private bool _isSetTimeZone = false;
         private string _time_zone = Parameter._timezoneIdUTC;
         private int timerCount = 0;
 
@@ -27,18 +27,12 @@ namespace RMTV_recorder
             _label = label;
         }
 
-        public Clock(Window window, Label label, bool isLocal)
-        {
-            _window = window;
-            _label = label;
-            _isLocal = isLocal;
-        }
-
         public Clock(Window window, Label label, string time_zone)
         {
             _window = window;
             _label = label;
             _time_zone = time_zone;
+            _isSetTimeZone = true;
         }
 
         public int StartClock()
@@ -67,13 +61,9 @@ namespace RMTV_recorder
 
         private void updateClock()
         {
-            if (_isLocal)
-                _label.Content = DateTime.Now.ToString("HH:mm:ss");
-            else
-            {
-                var datetime = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, _time_zone);
-                _label.Content = datetime.ToString("HH:mm:ss");
-            }
+            _label.Content = (_isSetTimeZone) ?
+                TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, _time_zone).ToString("HH:mm:ss") :
+                DateTime.Now.ToString("HH:mm:ss");
         }
 
         public int StartTimer()

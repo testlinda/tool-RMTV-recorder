@@ -1,34 +1,73 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace RMTV_recorder
 {
-    public class RecObj
+    public class RecObj : INotifyPropertyChanged
     {
         public enum RecordStatus
         {
             Scheduled,
+            //
             Recording,
             Stopping,
+            //
             Completed,
+            EndEarlier,
             Failed
         }
 
-        public int Index { get; set; }
+        private int _index;
+        public int Index
+        {
+            get
+            {
+                return _index;
+            }
+            set
+            {
+                _index = value;
+                NotifyPropertyChanged();
+            }
+        }
+
+        private RecordStatus _status;
+        public RecordStatus Status
+        {
+            get
+            {
+                return _status;
+            }
+            set
+            {
+                _status = value;
+                NotifyPropertyChanged();
+                CommonFunc.RaiseStatusChangedFlag();
+            }
+        }
+
         public string Language { get; set; }
         public DateTime StartTime { get; set; }
-        public bool StartTimeIsNow { get; set; }
         public DateTime EndTime { get; set; }
         public int Duration { get; set; }
-        public RecordStatus Status { get; set; }
         public string Log { get; set; }
         public FFmpeg Ffmpeg { get; set; }
         public ScheduledTask Task { get; set; }
         public string StrStartTime { get; set; }
         public string StrEndTime { get; set; }
+        public int RetryTimes { get; set; }
+        public bool IsStoppedManually { get; set; }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
 
         public RecObj()
         {
@@ -42,6 +81,7 @@ namespace RMTV_recorder
             Task.ArrangeTask();
             StrStartTime = GetStrDateTime(StartTime);
             StrEndTime = GetStrDateTime(EndTime);
+            IsStoppedManually = false;
         }
 
         public string GetStrDateTime(DateTime datetime)
@@ -63,13 +103,75 @@ namespace RMTV_recorder
                 return;
             }
             Status = RecordStatus.Recording;
-            CommonFunc.RaiseStatusChangedFlag();
 
-            Ffmpeg.StartRecord((Language.Equals(Parameter.Language_Spanish)), Duration * 60);
+            Ffmpeg.StartRecord((Language.Equals(Parameter.Language_Spanish)), Duration * 60, RetryTimes);
 
-            //System.Threading.Thread.Sleep(3000);
-            Status = (Ffmpeg.CheckFIleExist()) ? RecordStatus.Completed : RecordStatus.Failed;
-            CommonFunc.RaiseStatusChangedFlag();
+            if (!IsStoppedManually && CheckRecordStoppedEarlier())
+            {
+                RetryRecordVideo();
+                Status = (Ffmpeg.CheckFIleExist()) ? RecordStatus.EndEarlier : RecordStatus.Failed;
+            }
+            else
+            {
+                Status = (Ffmpeg.CheckFIleExist()) ? RecordStatus.Completed : RecordStatus.Failed;
+            }
+
         }
+
+        private bool CheckRecordStoppedEarlier()
+        {
+            if ((EndTime - CommonFunc.GetSpainTime()).TotalMinutes > Parameter.disconnection_diff_min)
+            {
+                return true;
+            }
+            return false;
+        }
+
+        private void RetryRecordVideo()
+        {
+            if (RetryTimes >= Parameter.retry_times_limit)
+                return;
+
+            DateTime starttime = GetStartTime();
+            if (starttime >= EndTime)
+                return;
+
+            RecObj recObj = new RecObj
+            {
+                Index = GetIndex(),
+                Language = Language,
+                StartTime = starttime,
+                EndTime = EndTime,
+                Duration = GetDuration(),
+                Status = RecObj.RecordStatus.Scheduled,
+                Log = "",
+                RetryTimes = this.RetryTimes + 1,
+            };
+
+            recObj.Initialization();
+            CommonFunc.AddRecObj(recObj);
+        }
+
+        private int GetIndex()
+        {
+            return Global._groupRecObj.Count + 1;
+        }
+
+        private DateTime GetStartTime()
+        {
+            Random rnd = new Random();
+            int delay_sec = rnd.Next(Parameter.retry_wait_min_sec, Parameter.retry_wait_max_sec);
+            return CommonFunc.GetSpainTime().AddSeconds(delay_sec);
+        }
+
+        private int GetDuration()
+        {
+            TimeSpan ts = EndTime - StartTime;
+            double differenceInMinutes = ts.TotalMinutes;
+            int duration = (int)differenceInMinutes;
+
+            return duration;
+        }
+
     }
 }

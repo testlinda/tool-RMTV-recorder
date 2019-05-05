@@ -16,8 +16,11 @@ namespace RMTV_recorder
     /// </summary>
     public partial class App : Application, ISingleInstanceApp
     {
+#if DEBUG
+        private const string strUnique = "This is RMTV-recorder. (test)";
+#else
         private const string strUnique = "This is RMTV-recorder.";
-
+#endif
         [STAThread]
         public static void Main()
         {
@@ -31,7 +34,7 @@ namespace RMTV_recorder
             }
         }
 
-        #region ISingleInstanceApp Members
+#region ISingleInstanceApp Members
         public bool SignalExternalCommandLineArgs(IList<string> args)
         {
             if (this.MainWindow.WindowState == WindowState.Minimized)
@@ -43,6 +46,6 @@ namespace RMTV_recorder
 
             return true;
         }
-        #endregion
+#endregion
     }
 }

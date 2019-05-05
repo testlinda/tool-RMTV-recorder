@@ -52,15 +52,16 @@ namespace RMTV_recorder
                     Index = GetIndex(),
                     Language = GetLanguage(),
                     StartTime = GetStartTime(),
-                    StartTimeIsNow = (rb_starttime_now.IsChecked == true),
                     EndTime = GetEndTime(),
                     Duration = GetDuration(),
                     Status = RecObj.RecordStatus.Scheduled,
                     Log = "",
+                    RetryTimes = 0,
                 };
 
                 recObj.Initialization();
-                Global._groupRecObj.Add(recObj);
+                CommonFunc.AddRecObj(recObj);
+
                 base.OnCloseDialog(this, true, e);
             }
         }
@@ -118,7 +119,7 @@ namespace RMTV_recorder
                         return false;
                     }
 
-                    if (GetStartTime().Day > GetSpainTime().Day)
+                    if (GetStartTime().Day > CommonFunc.GetSpainTime().Day)
                     {
                         if (int.Parse(tb_endtime_hour.Text) * 100 + int.Parse(tb_endtime_min.Text) <=
                             int.Parse(tb_statrttime_hour.Text) * 100 + int.Parse(tb_statrttime_hour.Text))
@@ -162,23 +163,6 @@ namespace RMTV_recorder
             return false;
         }        
 
-        private DateTime GetSpainTime()
-        {
-            return CommonFunc.ConvertDateTime2Spain(DateTime.Now);
-        }
-
-        private DateTime SetSpainTime(int hour, int minute)
-        {
-            DateTime dateSpain = GetSpainTime();
-            DateTime dateSpainReset = dateSpain.AddHours(dateSpain.Hour * (-1))
-                                               .AddMinutes(dateSpain.Minute * (-1))
-                                               .AddSeconds(dateSpain.Second * (-1))
-                                               .AddMilliseconds(dateSpain.Millisecond * (-1));
-
-            DateTime dateSet = dateSpainReset.AddHours(hour).AddMinutes(minute);
-            return dateSet;
-        }
-
         private int CalculateDuration2min()
         {
             int duration = 0;
@@ -220,14 +204,14 @@ namespace RMTV_recorder
 
             if (rb_starttime_now.IsChecked == true)
             {
-                date = GetSpainTime().AddSeconds(Parameter.delay_sec);
+                date = CommonFunc.GetSpainTime().AddSeconds(Parameter.delay_sec);
             }
             else
             {
-                date = SetSpainTime(int.Parse(tb_statrttime_hour.Text),
+                date = CommonFunc.SetSpainTime(int.Parse(tb_statrttime_hour.Text),
                                     int.Parse(tb_statrttime_min.Text));
 
-                if (IsPreviousTime(date, GetSpainTime()))
+                if (IsPreviousTime(date, CommonFunc.GetSpainTime()))
                 {
                     date = date.AddDays(1);
                 }
@@ -242,7 +226,7 @@ namespace RMTV_recorder
 
             if (rb_set_endtime.IsChecked == true)
             {
-                date = SetSpainTime(int.Parse(tb_endtime_hour.Text),
+                date = CommonFunc.SetSpainTime(int.Parse(tb_endtime_hour.Text),
                                     int.Parse(tb_endtime_min.Text));
 
                 if (IsPreviousTime(date, GetStartTime()))
@@ -265,8 +249,8 @@ namespace RMTV_recorder
 
         private void InitailEndTime()
         {
-            tb_endtime_hour.Text = GetSpainTime().AddHours(1).Hour.ToString("00");
-            tb_endtime_min.Text = GetSpainTime().Minute.ToString("00");
+            tb_endtime_hour.Text = CommonFunc.GetSpainTime().AddHours(1).Hour.ToString("00");
+            tb_endtime_min.Text = CommonFunc.GetSpainTime().Minute.ToString("00");
         }
 
         private void textBox_TextChanged(object sender, TextChangedEventArgs e)

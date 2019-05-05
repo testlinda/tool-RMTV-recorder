@@ -14,7 +14,6 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="10" />
         </Grid.RowDefinitions>
         <!-- Clock -->
         <Grid Grid.Row="0">
@@ -59,13 +58,16 @@
                 <Label Grid.Column="1" x:Name="label_time_local" Content="--" Foreground="Salmon" FontSize="18" VerticalAlignment="Center"/>
             </Grid>
             <Grid Grid.Row="1" Grid.Column="5" Background="LightSalmon" ToolTip="Watch RMTV">
-                <Image Source="/Resource/tv.png" Height="40" MouseDown="TV_MouseDown"/>
+                <Image Source="/Resource/tv.png" Height="40"/>
+                <Rectangle Fill="Transparent" PreviewMouseDown="TV_PreviewMouseDown"/>
             </Grid>
             <Grid Grid.Row="1" Grid.Column="7" Background="LightSalmon" ToolTip="Time Table">
-                <Image Source="/Resource/timetable.png" Height="40" MouseDown="TimeTable_MouseDown"/>
+                <Image Source="/Resource/timetable.png" Height="40"/>
+                <Rectangle Fill="Transparent" PreviewMouseDown="TimeTable_PreviewMouseDown"/>
             </Grid>
             <Grid Grid.Row="1" Grid.Column="9" Background="LightSalmon" ToolTip="Information">
-                <Image Source="/Resource/info.png" Width="20" MouseDown="Information_MouseDown"/>
+                <Image Source="/Resource/info.png" Width="20"/>
+                <Rectangle Fill="Transparent" PreviewMouseDown="Information_PreviewMouseDown"/>
             </Grid>
         </Grid>
         <!-- Record now -->
@@ -82,8 +84,6 @@
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="5" />
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="10" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <ComboBox Grid.Column="0" x:Name="cb_lang" Height="20" Width="75" Background="Wheat" IsSelected="True">
@@ -123,24 +123,27 @@
                     </Grid>
 
                 </Grid>
-                <Button Grid.Column="5" x:Name="btn_openlog" 
-                        Height="30" Width="30" 
-                        Background="Transparent"
-                        ToolTip="Show log"
-                        Click="btn_openlog_m_Click">
-                    <StackPanel>
-                        <Image Source="/Resource/log.png" Width="20" Height="20"/>
-                    </StackPanel>
-                </Button>
-                <Button Grid.Column="7" x:Name="btn_openfolder" 
-                        Height="30" Width="30" 
-                        Background="Transparent"
-                        ToolTip="Open folder"
-                        Click='btn_openfolder_Click'>
-                    <StackPanel>
-                        <Image Source="/Resource/folder.png" Width="20" Height="20"/>
-                    </StackPanel>
-                </Button>
+                <StackPanel Grid.Column="5" Orientation="Horizontal">
+                    <Button Height="30" Width="30" 
+                            x:Name="btn_openlog"
+                            Background="Transparent"
+                            ToolTip="Show log"
+                            Click="btn_openlog_m_Click">
+                        <StackPanel>
+                            <Image Source="/Resource/log.png" Width="20" Height="20"/>
+                        </StackPanel>
+                    </Button>
+                    <Label Width="10"/>
+                    <Button Height="30" Width="30" 
+                            Background="Transparent"
+                            ToolTip="Open folder"
+                            Click='btn_openfolder_Click'>
+                        <StackPanel>
+                            <Image Source="/Resource/folder.png" Width="20" Height="20"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+                
             </Grid>
         </Grid>
         <!-- Record scheduled -->
@@ -178,40 +181,49 @@
                             Background="Transparent"
                             ToolTip="Delete"
                             Click='btn_deleteRec_Click'>
-                            <StackPanel>
-                                <Image Source="/Resource/delete.png" Width="20" Height="20"/>
-                            </StackPanel>
+                        <StackPanel>
+                            <Image Source="/Resource/delete.png" Width="20" Height="20"/>
+                        </StackPanel>
                     </Button>
-                    <Button Grid.Column="3"
-                            Height="30" Width="30" 
+                    <StackPanel Grid.Column="4" Orientation="Horizontal">
+                        <Button Grid.Column="4"
+                                Height="30" Width="30" 
+                                x:Name="btn_debug"
+                                Background="LightSalmon" BorderThickness="0"
+                                local:ContextMenuLeftClickBehavior.IsLeftClickEnabled="True">
+                            <StackPanel>
+                                <Image Source="/Resource/debug.png" Width="20" Height="20"/>
+                            </StackPanel>
+                            <Button.ContextMenu>
+                                <ContextMenu Name="menu_debug">
+                                    <MenuItem Header="Send Ctrl+C Command" Click="btn_ctrlC_Click"/>
+                                    <MenuItem Header="Update m3u8 files" Click="btn_updateM3U8_Click"/>
+                                </ContextMenu>
+                            </Button.ContextMenu>
+                        </Button>
+                        <Label Width="10"/>
+                        <Button Height="30" Width="30" 
                             Background="Transparent"
                             HorizontalAlignment="Right"
                             ToolTip="Stop Recording"
                             Click='btn_stopRec_Click'>
-                        <StackPanel>
-                            <Image Source="/Resource/stop.png"/>
-                        </StackPanel>
-                    </Button>
-                    <StackPanel Grid.Column="4" x:Name="stackpanel_test" Orientation="Horizontal"  HorizontalAlignment="Right">
-                        <Button Height="30" Width="30" 
-                                x:Name="btn_test1"
-                                Background="Transparent"
-                                Content="test1"
-                                Click='btn_test1_Click'/>
-
+                            <StackPanel>
+                                <Image Source="/Resource/stop.png"/>
+                            </StackPanel>
+                        </Button>
                         <Label Width="10"/>
-                        
                         <Button Height="30" Width="30" 
-                                x:Name="btn_test2"
-                                Background="Transparent"
-                                Content="test2"
-                                Click='btn_test2_Click'/>
+                            Background="Transparent"
+                            ToolTip="Open folder"
+                            Click='btn_openfolder_Click'>
+                            <StackPanel>
+                                <Image Source="/Resource/folder.png" Width="20" Height="20"/>
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
-                    
-
                 </Grid>
                 <Grid Grid.Row="1" Margin="0,10">
-                    <DataGrid Name="dgRecObj" Height="220"
+                    <DataGrid Name="dgRecObj" Height="230"
                                               IsReadOnly="True"
                                               AutoGenerateColumns="False"
                                               CanUserResizeColumns="False" CanUserResizeRows="False"
@@ -219,7 +231,13 @@
                                               CanUserAddRows="False" CanUserDeleteRows="False">
                         <DataGrid.Columns>
 
-                            <DataGridTextColumn Header="#" Binding="{Binding Index}" Width="10" />
+                            <DataGridTextColumn Header="#" Binding="{Binding Index}" Width="10">
+                                <DataGridTextColumn.CellStyle>
+                                    <Style TargetType="DataGridCell">
+                                        <Setter Property="ToolTip" Value="{Binding Index}" />
+                                    </Style>
+                                </DataGridTextColumn.CellStyle>
+                            </DataGridTextColumn>
                             <DataGridTextColumn  Header="Language" Binding="{Binding Language}" Width="Auto"/>
                             <DataGridTextColumn Header="Start Time" Binding="{Binding StartTime,StringFormat='HH:mm:ss'}" Width="70">
                                 <DataGridTextColumn.CellStyle>

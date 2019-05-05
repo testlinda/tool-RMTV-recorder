@@ -70,6 +70,8 @@
       <DependentUpon>ShutDownDialog_UC.xaml</DependentUpon>
     </Compile>
     <Compile Include="Common\CommonFunc.cs" />
+    <Compile Include="Common\ContextMenuLeftClickBehavior.cs" />
+    <Compile Include="Common\DownloadFile.cs" />
     <Compile Include="Common\Parameter.cs" />
     <Compile Include="Common\ScheduledTask.cs" />
     <Compile Include="Common\Time.cs" />
@@ -85,6 +87,7 @@
     <Compile Include="CommonUI\AddRec_UC.xaml.cs">
       <DependentUpon>AddRec_UC.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Properties\AssemblyInfo_version.cs" />
     <Compile Include="Resource.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -179,6 +182,7 @@
     <Resource Include="Resource\icon.ico" />
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="Resource\debug.png" />
     <Resource Include="Resource\info.png" />
     <Resource Include="Resource\stop.png" />
     <Resource Include="Resource\tv.png" />

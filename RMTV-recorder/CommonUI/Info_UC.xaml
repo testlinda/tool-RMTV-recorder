@@ -5,19 +5,26 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:RMTV_recorder"
              mc:Ignorable="d" 
-             Height="100" Width="200" Background="LightSalmon">
-    <Grid Margin="20" VerticalAlignment="Center" HorizontalAlignment="Center">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="Auto" />
-        </Grid.ColumnDefinitions>
-        <Label Grid.Row="0" Grid.Column="0" Content="Version" FontWeight="ExtraBold"/>
-        <Label Grid.Row="1" Grid.Column="0" Content="Author" FontWeight="ExtraBold"/>
-        <Label Grid.Row="0" Grid.Column="1" x:Name="label_version"/>
-        <Label Grid.Row="1" Grid.Column="1" x:Name="label_author"/>
+             Height="120" Width="200" Background="LightSalmon">
+    <Grid>
+        <Grid Margin="20" VerticalAlignment="Center" HorizontalAlignment="Center">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Label Grid.Row="0" Grid.Column="0" Content="Version" FontWeight="ExtraBold"/>
+            <Label Grid.Row="1" Grid.Column="0" Content="Author" FontWeight="ExtraBold"/>
+            <Label Grid.Row="0" Grid.Column="1" x:Name="label_version"/>
+            <Label Grid.Row="1" Grid.Column="1" x:Name="label_author"/>
+        </Grid>
+        <Rectangle Fill="Transparent" PreviewMouseDown="page_PreviewMouseDown"/>
+        <Label Name="label_message"
+               Foreground="White"
+               FontWeight="ExtraBold"
+               FontSize="18" VerticalAlignment="Bottom" HorizontalAlignment="Center"/>
     </Grid>
 </local:ucCustom>

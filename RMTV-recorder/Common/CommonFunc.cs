@@ -6,6 +6,8 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media.Animation;
 
 namespace RMTV_recorder
 {
@@ -24,6 +26,22 @@ namespace RMTV_recorder
         public static void ClearStatusChangedFlag()
         {
             Global.flagTaskComplete = false;
+        }
+
+        public static void AddRecObj(RecObj recObj)
+        {
+            lock(Global._syncLock)
+            {
+                Global._groupRecObj.Add(recObj);
+            }
+        }
+
+        public static void RemoveRecObj(RecObj recObj)
+        {
+            lock (Global._syncLock)
+            {
+                Global._groupRecObj.Remove(recObj);
+            }
         }
 
         public static bool PrepareShutDown(Window window)
@@ -72,6 +90,89 @@ namespace RMTV_recorder
             DateTime datetime_spain = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(datetime_local.ToUniversalTime(), Parameter._timezoneIdSpain);
 
             return datetime_spain;
+        }
+
+        public static DateTime GetSpainTime()
+        {
+            return ConvertDateTime2Spain(DateTime.Now);
+        }
+
+        public static DateTime SetSpainTime(int hour, int minute)
+        {
+            DateTime dateNow = GetSpainTime();
+            DateTime dateReset = dateNow.AddHours(dateNow.Hour * (-1))
+                                               .AddMinutes(dateNow.Minute * (-1))
+                                               .AddSeconds(dateNow.Second * (-1))
+                                               .AddMilliseconds(dateNow.Millisecond * (-1));
+
+            DateTime date = dateReset.AddHours(hour).AddMinutes(minute);
+            return date;
+        }
+
+        public static void UpdateM3U8()
+        {
+            DownloadFile d = new DownloadFile();
+            d.DownloadESM3U8();
+            d.DownloadENM3U8();
+        }
+
+        public static TimeSpan GetVideoDuration(string filepath)
+        {
+            Process process = new Process();
+            System.Text.RegularExpressions.Regex regex = null;
+            System.Text.RegularExpressions.Match match = null;
+            System.IO.StreamReader srouput = null;
+            string output = "";
+
+            ProcessStartInfo startInfo = new ProcessStartInfo();
+            startInfo.CreateNoWindow = true;
+            startInfo.UseShellExecute = false;
+            startInfo.FileName = Parameter._ffmpegPath;
+            startInfo.Arguments = string.Format("-i \"{0}\"", filepath);
+            startInfo.RedirectStandardError = true;
+            process = Process.Start(startInfo);
+
+            srouput = process.StandardError;
+            output = srouput.ReadToEnd();
+
+            process.WaitForExit();
+            process.Close();
+            process.Dispose();
+            srouput.Close();
+            srouput.Dispose();
+
+            regex = new System.Text.RegularExpressions.Regex("[D|d]uration:.((\\d|:|\\.)*)");
+            match = regex.Match(output);
+
+            if (match.Success)
+            {
+                string[] matchpieces = match.Value.Split(new char[] {' '});
+                string[] timepieces = matchpieces[1].Split(new char[] { ':', '.' });
+                if (timepieces.Length == 4)
+                {
+                    return new TimeSpan(0, Convert.ToInt16(timepieces[0]), Convert.ToInt16(timepieces[1]), Convert.ToInt16(timepieces[2]), Convert.ToInt16(timepieces[3]));
+                }
+            }
+
+            return TimeSpan.Zero;
+        }
+
+        public static void ToastMessage(Label label, string message, int msg_duration)
+        {
+            label.Content = message;
+
+            Storyboard storyboard = new Storyboard();
+            TimeSpan duration = new TimeSpan(0, 0, msg_duration);
+            DoubleAnimation animation = new DoubleAnimation();
+
+            animation.From = (double)msg_duration;
+            animation.To = 0.0;
+            animation.Duration = new Duration(duration);
+            Storyboard.SetTargetName(animation, label.Name);
+            Storyboard.SetTargetProperty(animation, new PropertyPath(Control.OpacityProperty));
+            storyboard.Children.Add(animation);
+
+            storyboard.Begin(label);
         }
 
         public static void test()
