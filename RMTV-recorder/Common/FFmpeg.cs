@@ -20,25 +20,30 @@ namespace RMTV_recorder
             _log = new List<string>();
         }
 
-        public void StartRecord(bool language)
+        public void StartRecord(string channel)
         {
             _isManaul = true;
+            string channellink = "";
+
+            GetChannelLink(channel, ref channellink);
             string arguments = String.Concat("-hide_banner -protocol_whitelist \"concat,file,subfile,http,https,tls,rtp,tcp,udp,crypto\" -i \"",
-                                           (language ? Parameter._m3u8_es_Path : Parameter._m3u8_en_Path),
+                                           channellink,
                                            "\"", " -c copy ", 
-                                           "\"", Parameter._outputPath, "\\", GetOutputFileName(language, true, 0), "\"");
+                                           "\"", Parameter._outputPath, "\\", GetOutputFileName(channel, true, 0), "\"");
             //Debug.WriteLine(arguments);
             RecordVideo(arguments);
         }
 
-        public void StartRecord(bool language, int duration, int retry_times)
+        public void StartRecord(string channel, string channellink, int duration, int retry_times)
         {
             _isManaul = false;
+
+            GetChannelLink(channel, ref channellink);
             string arguments = String.Concat("-hide_banner -protocol_whitelist \"concat,file,subfile,http,https,tls,rtp,tcp,udp,crypto\" -i \"",
-                               (language ? Parameter._m3u8_es_Path : Parameter._m3u8_en_Path),
+                               channellink,
                                "\"", " -t ", duration,
                                " -c copy ",
-                               "\"", Parameter._outputPath, "\\", GetOutputFileName(language, false, retry_times), "\"");
+                               "\"", Parameter._outputPath, "\\", GetOutputFileName(channel, false, retry_times), "\"");
             //Debug.WriteLine(arguments);
             RecordVideo(arguments);
 
@@ -73,12 +78,12 @@ namespace RMTV_recorder
                 if(!SendCtrlCKey())
                 {
                     //_process.Kill();
-                    _log.Add("Send Ctrl+C failed.");
+                    _log.Add("[Information] Send Ctrl+C failed. -----");
                     Debug.WriteLine("Send Ctrl+C failed.");
                 }
                 else
                 {
-                    _log.Add("Send Ctrl+C successfully.");
+                    _log.Add("[Information] Send Ctrl+C successfully. -----");
                 }
             }
         }
@@ -116,7 +121,7 @@ namespace RMTV_recorder
                     if (!GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0))
                         return false;
 
-                    System.Threading.Thread.Sleep(100);
+                    System.Threading.Thread.Sleep(200);
                     if (_isManaul)
                         _process.WaitForExit();
                 }
@@ -155,13 +160,25 @@ namespace RMTV_recorder
             return false;
         }
 
-        private string GetOutputFileName(bool language, bool isManaul, int retry_times)
+        private void GetChannelLink(string channel, ref string channellink)
+        {
+            if (channel.Equals(Parameter.Channel_Spanish))
+            {
+                channellink = Parameter._m3u8_es_Path;
+            }
+            else if (channel.Equals(Parameter.Channel_English))
+            {
+                channellink = Parameter._m3u8_en_Path;
+            }
+        }
+
+        private string GetOutputFileName(string channel, bool isManaul, int retry_times)
         {
             TimeStamp stamp = new TimeStamp();
             _fileName =  string.Concat("rmtv-record_", 
-                                       (language ? "spanish" : "english"), 
-                                       "_", 
-                                       stamp.GetTimeStamp(), 
+                                       stamp.GetTimeStamp(),
+                                       "_",
+                                       channel.ToLower(),
                                        "_",
                                        (isManaul ? "manual" : "scheduled"),
                                        (retry_times!=0 ? string.Format("(reconnected{0:D2})", retry_times) : ""),

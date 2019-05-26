@@ -1,4 +1,5 @@
-﻿using System;
+﻿using IniFile;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -34,6 +35,10 @@ namespace RMTV_recorder
 #endif
             label_version.Content = GetVersion() + " (" + release_version + ")";
             label_author.Content = GetCopyright();
+
+            //debug info
+            label_struniqle.Content = Global._uniqueStr;
+            RefreshDebugInfoVisibility();
         }
 
         private string GetVersion()
@@ -66,16 +71,23 @@ namespace RMTV_recorder
             return string.Empty;
         }
 
+        private void RefreshDebugInfoVisibility()
+        {
+            sp_debuginfo.Visibility = (Global._debugmode) ? Visibility.Visible : Visibility.Hidden;
+        }
+
         private void page_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
             click_count++;
 
             if (click_count == Parameter.debug_on_click)
             {
-                Parameter._debugmode = !Parameter._debugmode;
+                Global._debugmode = !Global._debugmode;
+                RefreshDebugInfoVisibility();
                 CommonFunc.ToastMessage(label_message, 
-                                        String.Format("Debug mode is {0}!", Parameter._debugmode ? "ON" : "OFF"),
+                                        String.Format("Debug mode is {0}!", Global._debugmode ? "ON" : "OFF"),
                                         2);
+                click_count = 0;
             }
         }
     }

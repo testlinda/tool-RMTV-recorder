@@ -66,15 +66,25 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
+    <Compile Include="CommonUI\Initialization_UC.xaml.cs">
+      <DependentUpon>Initialization_UC.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="CommonUI\Processing_UC.xaml.cs">
+      <DependentUpon>Processing_UC.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="CommonUI\Setting_UC.xaml.cs">
+      <DependentUpon>Setting_UC.xaml</DependentUpon>
+    </Compile>
     <Compile Include="CommonUI\ShutDownDialog_UC.xaml.cs">
       <DependentUpon>ShutDownDialog_UC.xaml</DependentUpon>
     </Compile>
     <Compile Include="Common\CommonFunc.cs" />
     <Compile Include="Common\ContextMenuLeftClickBehavior.cs" />
     <Compile Include="Common\DownloadFile.cs" />
+    <Compile Include="Common\IniHelper.cs" />
     <Compile Include="Common\Parameter.cs" />
     <Compile Include="Common\ScheduledTask.cs" />
-    <Compile Include="Common\Time.cs" />
+    <Compile Include="Common\Clock.cs" />
     <Compile Include="CommonUI\winCustom.xaml.cs">
       <DependentUpon>winCustom.xaml</DependentUpon>
     </Compile>
@@ -94,11 +104,23 @@
       <DependentUpon>Resource.resx</DependentUpon>
     </Compile>
     <Compile Include="Common\SingleInstance.cs" />
+    <Page Include="CommonUI\Initialization_UC.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="CommonUI\Log_UC.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="CommonUI\Info_UC.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="CommonUI\Processing_UC.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="CommonUI\Setting_UC.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -182,6 +204,8 @@
     <Resource Include="Resource\icon.ico" />
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="Resource\clock.png" />
+    <Resource Include="Resource\setting.png" />
     <Resource Include="Resource\debug.png" />
     <Resource Include="Resource\info.png" />
     <Resource Include="Resource\stop.png" />

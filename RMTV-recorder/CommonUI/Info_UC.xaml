@@ -7,7 +7,7 @@
              mc:Ignorable="d" 
              Height="120" Width="200" Background="LightSalmon">
     <Grid>
-        <Grid Margin="20" VerticalAlignment="Center" HorizontalAlignment="Center">
+        <Grid VerticalAlignment="Center" HorizontalAlignment="Center">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -21,10 +21,13 @@
             <Label Grid.Row="0" Grid.Column="1" x:Name="label_version"/>
             <Label Grid.Row="1" Grid.Column="1" x:Name="label_author"/>
         </Grid>
-        <Rectangle Fill="Transparent" PreviewMouseDown="page_PreviewMouseDown"/>
+        <StackPanel Name="sp_debuginfo">
+            <Label Name="label_struniqle" Foreground="Firebrick"/>
+        </StackPanel>
         <Label Name="label_message"
                Foreground="White"
                FontWeight="ExtraBold"
                FontSize="18" VerticalAlignment="Bottom" HorizontalAlignment="Center"/>
+        <Rectangle Fill="Transparent" PreviewMouseDown="page_PreviewMouseDown"/>
     </Grid>
 </local:ucCustom>

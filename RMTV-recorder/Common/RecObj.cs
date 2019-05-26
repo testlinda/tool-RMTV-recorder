@@ -51,7 +51,8 @@ namespace RMTV_recorder
             }
         }
 
-        public string Language { get; set; }
+        public string Channel { get; set; }
+        public string ChannelLink { get; set; }
         public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }
         public int Duration { get; set; }
@@ -60,6 +61,7 @@ namespace RMTV_recorder
         public ScheduledTask Task { get; set; }
         public string StrStartTime { get; set; }
         public string StrEndTime { get; set; }
+        public string TimeZoneId { get; set; }
         public int RetryTimes { get; set; }
         public bool IsStoppedManually { get; set; }
 
@@ -77,7 +79,7 @@ namespace RMTV_recorder
         public void Initialization()
         {
             Ffmpeg = new FFmpeg();
-            Task = new ScheduledTask(CommonFunc.ConvertDateTime2Local(StartTime), RecordVideo);
+            Task = new ScheduledTask(CommonFunc.ConvertDateTime2Local(TimeZoneId, StartTime), RecordVideo);
             Task.ArrangeTask();
             StrStartTime = GetStrDateTime(StartTime);
             StrEndTime = GetStrDateTime(EndTime);
@@ -87,11 +89,13 @@ namespace RMTV_recorder
         public string GetStrDateTime(DateTime datetime)
         {
             string strFormat = "yyyy/MM/dd a\\t HH:mm:ss";
-            string strTime = String.Concat("Spain:\t", 
+            string strTime = String.Concat("(",
+                                           CommonFunc.GetTimeZoneHour(TimeZoneId),
+                                            "):\t", 
                                            datetime.ToString(strFormat),
                                            "\r\n",
                                            "Local:\t",
-                                           CommonFunc.ConvertDateTime2Local(datetime).ToString(strFormat));
+                                           CommonFunc.ConvertDateTime2Local(TimeZoneId, datetime).ToString(strFormat));
             return strTime;
         }
 
@@ -104,7 +108,7 @@ namespace RMTV_recorder
             }
             Status = RecordStatus.Recording;
 
-            Ffmpeg.StartRecord((Language.Equals(Parameter.Language_Spanish)), Duration * 60, RetryTimes);
+            Ffmpeg.StartRecord(Channel, ChannelLink, Duration * 60, RetryTimes);
 
             if (!IsStoppedManually && CheckRecordStoppedEarlier())
             {
@@ -120,7 +124,7 @@ namespace RMTV_recorder
 
         private bool CheckRecordStoppedEarlier()
         {
-            if ((EndTime - CommonFunc.GetSpainTime()).TotalMinutes > Parameter.disconnection_diff_min)
+            if ((EndTime - CommonFunc.GetZoneTime(TimeZoneId)).TotalMinutes > Parameter.disconnection_diff_min)
             {
                 return true;
             }
@@ -132,17 +136,19 @@ namespace RMTV_recorder
             if (RetryTimes >= Parameter.retry_times_limit)
                 return;
 
-            DateTime starttime = GetStartTime();
+            DateTime starttime = GetRetryStartTime();
             if (starttime >= EndTime)
                 return;
 
             RecObj recObj = new RecObj
             {
                 Index = GetIndex(),
-                Language = Language,
+                Channel = Channel,
+                ChannelLink = ChannelLink,
                 StartTime = starttime,
                 EndTime = EndTime,
                 Duration = GetDuration(),
+                TimeZoneId = Global._timezoneId,
                 Status = RecObj.RecordStatus.Scheduled,
                 Log = "",
                 RetryTimes = this.RetryTimes + 1,
@@ -157,11 +163,11 @@ namespace RMTV_recorder
             return Global._groupRecObj.Count + 1;
         }
 
-        private DateTime GetStartTime()
+        private DateTime GetRetryStartTime()
         {
             Random rnd = new Random();
             int delay_sec = rnd.Next(Parameter.retry_wait_min_sec, Parameter.retry_wait_max_sec);
-            return CommonFunc.GetSpainTime().AddSeconds(delay_sec);
+            return CommonFunc.GetZoneTime(TimeZoneId).AddSeconds(delay_sec);
         }
 
         private int GetDuration()

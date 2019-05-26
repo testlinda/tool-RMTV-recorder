@@ -16,15 +16,12 @@ namespace RMTV_recorder
     /// </summary>
     public partial class App : Application, ISingleInstanceApp
     {
-#if DEBUG
-        private const string strUnique = "This is RMTV-recorder. (test)";
-#else
-        private const string strUnique = "This is RMTV-recorder.";
-#endif
         [STAThread]
         public static void Main()
         {
-            if (SingleInstance<App>.InitializeAsFirstInstance(strUnique))
+            CommonFunc.IntialUniqleString();
+
+            if (SingleInstance<App>.InitializeAsFirstInstance(Global._uniqueStr))
             {
                 var application = new App();
                 application.InitializeComponent();
@@ -47,5 +44,6 @@ namespace RMTV_recorder
             return true;
         }
 #endregion
+
     }
 }

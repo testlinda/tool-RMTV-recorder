@@ -1,4 +1,5 @@
-﻿using System;
+﻿using IniFile;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -21,15 +22,14 @@ namespace RMTV_recorder
 {
     public partial class MainWindow : Window
     {
-        private const string _windowTitle = "RMTV Recorder";
-        private const string _outputPath = "output";
         private bool isManuallyRecording = false;
         private bool load_success = false;
 
         private BackgroundWorker backgroundWorker_manual = null;
         private FFmpeg ffmpeg_manual = null;
-        private Clock timer_manual = null;
-        private string _selectedLang_manual = Parameter.Language_Spanish ;
+        private Clock clock = null;
+        private ClockTimer clocktimer_manual = null;
+        private string _selectedChannel_manual = Parameter.Channel_Spanish ;
         private int timer_refreshdg_interval_sec = 60;
         private Timer timer_refreshdg = null;
         private Timer timer_manualrecord_checkalive = null;
@@ -38,7 +38,7 @@ namespace RMTV_recorder
         public MainWindow()
         {
             InitializeComponent();
-            this.Title = _windowTitle;
+            this.Title = Parameter._windowTitle;
             this.Loaded += Window_Loaded;
 
             load_success = Intialization();
@@ -62,10 +62,10 @@ namespace RMTV_recorder
 #if DEBUG
             AddTestItems();
 #endif
+            LoadIni();
             RefreshDebugMode();
-            DisplayClock();
+            RunClock();
             InitialOutputFolder();
-            InitialRecordButton();
             InitialUI();
             InitialRecording();
             InitialNotifyIcon();
@@ -76,6 +76,24 @@ namespace RMTV_recorder
             Closing += OnClosing;
 
             return true;
+        }
+
+        private void LoadIni()
+        {
+            if (!File.Exists(Parameter._setting_Path))
+            {
+                CreateDefaultIniFile();
+            }
+
+            Global._timezoneId = IniHelper.ReadValue(Parameter._iniSectionSetting, Parameter._iniKeyTimeZoneId, Parameter._setting_Path);
+            Global._debugmode = (IniHelper.ReadValue(Parameter._iniSectionSetting, Parameter._iniKeyDebugMode, Parameter._setting_Path).Equals("Y", StringComparison.OrdinalIgnoreCase));
+        }
+
+        private void CreateDefaultIniFile()
+        {
+            bool result = true;
+            result = IniHelper.WriteValue(Parameter._iniSectionSetting, Parameter._iniKeyTimeZoneId, Parameter._timezoneIdSpain, Parameter._setting_Path);
+            result = IniHelper.WriteValue(Parameter._iniSectionSetting, Parameter._iniKeyDebugMode, "N", Parameter._setting_Path);
         }
 
         private bool CheckbinAvailable()
@@ -92,6 +110,7 @@ namespace RMTV_recorder
 
         private void AddTestItems()
         {
+            // A menu item in debug button named "Test" only showed in debug mode
             MenuItem menu_test = new MenuItem();
             menu_test.Header = "Test";
             menu_test.Click += btn_test_Click;
@@ -101,32 +120,36 @@ namespace RMTV_recorder
 
         private void RefreshDebugMode()
         {
-            btn_debug.Visibility = (Parameter._debugmode) ? Visibility.Visible : Visibility.Collapsed;
-
+            btn_debug.Visibility = (Global._debugmode) ? Visibility.Visible : Visibility.Collapsed;
+            IniHelper.WriteValue(Parameter._iniSectionSetting, Parameter._iniKeyDebugMode, Global._debugmode ? "Y" : "N", Parameter._setting_Path);
         }
 
-        private void DisplayClock()
+        private void RunClock()
         {
-            Clock timer_local = new Clock(this, label_time_local);
-            timer_local.StartClock();
-            Clock timer_spain = new Clock(this, label_time_spain, Parameter._timezoneIdSpain);
-            timer_spain.StartClock();
+            label_timezone.Content = CommonFunc.GetTimeZoneHour(Global._timezoneId);
+            grid_clock.ToolTip = TimeZoneInfo.FindSystemTimeZoneById(Global._timezoneId).DisplayName;
+
+            clock = new Clock(this, label_clock, Global._timezoneId);
+            clock.StartClock();
         }
 
         private void InitialOutputFolder()
         {
-            System.IO.Directory.CreateDirectory(_outputPath);
+            System.IO.Directory.CreateDirectory(Parameter._outputPath);
+        }
+
+        
+
+        private void InitialUI()
+        {
+            InitialRecordButton();
+            chechbox_isshutdown.Visibility = Visibility.Hidden;
         }
 
         private void InitialRecordButton()
         {
-            timer_manual = new Clock(this, label_duration);
+            clocktimer_manual = new ClockTimer(this, label_duration);
             SetRecordButton(RecordButtonStatus.isStopped);
-        }
-
-        private void InitialUI()
-        {
-            chechbox_isshutdown.Visibility = Visibility.Hidden;
         }
 
         private void InitialRecording()
@@ -192,7 +215,7 @@ namespace RMTV_recorder
                     btn_record.IsEnabled = true;
                     btn_openlog.Visibility = Visibility.Visible;
                     label_status.Content = "Stopped";
-                    timer_manual.StopTimer();
+                    clocktimer_manual.StopTimer();
                     cb_lang.IsEnabled = true;
                     break;
 
@@ -212,7 +235,7 @@ namespace RMTV_recorder
                     label_status.Content = "Starting...";
                     label_starttime.Content = DateTime.Now.ToString("HH:mm:ss");
                     cb_lang.IsEnabled = false;
-                    timer_manual.StartTimer();
+                    clocktimer_manual.StartTimer();
                     break;
 
                 case RecordButtonStatus.isRecording:
@@ -261,7 +284,7 @@ namespace RMTV_recorder
                     btn_record.IsEnabled = true;
                     btn_openlog.Visibility = Visibility.Visible;
                     label_status.Content = "Stopped (Failed)";
-                    timer_manual.StopTimer();
+                    clocktimer_manual.StopTimer();
                     cb_lang.IsEnabled = true;
                     break;
 
@@ -278,7 +301,7 @@ namespace RMTV_recorder
 
         private void btn_openfolder_Click(object sender, RoutedEventArgs e)
         {
-            string path = Path.Combine(Environment.CurrentDirectory, _outputPath);
+            string path = Path.Combine(Environment.CurrentDirectory, Parameter._outputPath);
             try
             {
                 Process.Start(path);
@@ -295,7 +318,7 @@ namespace RMTV_recorder
 
             if (isManuallyRecording)
             {
-                _selectedLang_manual = cb_lang.Text;
+                _selectedChannel_manual = cb_lang.Text;
                 SetRecordButton(RecordButtonStatus.isStartRecording);
             }
             else
@@ -338,7 +361,7 @@ namespace RMTV_recorder
         private void RecordVideo()
         {
             ffmpeg_manual = new FFmpeg();
-            ffmpeg_manual.StartRecord(_selectedLang_manual.Equals(Parameter.Language_Spanish ));
+            ffmpeg_manual.StartRecord(_selectedChannel_manual);
         }
 
         private void StopRecordVideo()
@@ -473,6 +496,38 @@ namespace RMTV_recorder
             System.Diagnostics.Process.Start(Parameter.uri_RMTV_es);
         }
 
+        private void Setting_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            winCustom wincustom = new winCustom();
+            Setting_UC setting_uc = new Setting_UC();
+
+            wincustom.winContent = setting_uc;
+            wincustom.Title = "Setting";
+            wincustom.Topmost = true;
+            wincustom.Owner = this;
+            wincustom.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+            wincustom.ShowInTaskbar = false;
+
+            if (wincustom.ShowDialog() == true)
+            {
+
+                RefreshSetting();
+            }
+            
+        }
+
+        private void RefreshSetting()
+        {
+            UpdateClock();
+        }
+
+        private void UpdateClock()
+        {
+            label_timezone.Content = CommonFunc.GetTimeZoneHour(Global._timezoneId);
+            clock.UpdateTimeZone(Global._timezoneId);
+            grid_clock.ToolTip = CommonFunc.GetTimeZoneDisplayName(Global._timezoneId);
+        }
+
         static void UserControl_CloseDialog(object sender, bool bApply, EventArgs e)
         {
 
@@ -507,13 +562,13 @@ namespace RMTV_recorder
         {
             if (dgRecObj.SelectedItems.Count > 0)
             {
-                for (int i = 0; i < dgRecObj.SelectedItems.Count; i++)
+                int count = dgRecObj.SelectedItems.Count;
+                for (int i = 0; i < count; i++)
                 {
-                    RecObj recObj = (RecObj)dgRecObj.SelectedItems[i];
-
+                    RecObj recObj = (RecObj)dgRecObj.SelectedItems[count -i -1];
                     if (recObj.Status == RecObj.RecordStatus.Recording ||
                         recObj.Status == RecObj.RecordStatus.Stopping)
-                        continue;                   
+                        continue;
 
                     recObj.Task.CancelTask();
                     CommonFunc.RemoveRecObj(recObj);

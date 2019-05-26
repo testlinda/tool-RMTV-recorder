@@ -24,9 +24,9 @@
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="10" />
-                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="10" />
-                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="60" />
                 <ColumnDefinition Width="10" />
                 <ColumnDefinition Width="60" />
                 <ColumnDefinition Width="10" />
@@ -35,35 +35,38 @@
                 <ColumnDefinition Width="30" />
                 <ColumnDefinition Width="10" />
             </Grid.ColumnDefinitions>
-            <Grid Grid.Row="1" Grid.Column="1" 
-                  Background="OldLace">
+            <Grid Grid.Row="1" Grid.Column="1" Name="grid_clock" Background="OldLace">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0" Margin="10" VerticalAlignment="Center">
-                    <Image Source="/Resource/spain.png" Height="40" Width="40"/>
-                </StackPanel>
-                <Label Grid.Column="1" x:Name="label_time_spain" Content="--" Foreground="Salmon" FontSize="18" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                <Grid Grid.Column="0" Margin="10" VerticalAlignment="Center">
+                    <Image Source="/Resource/clock.png" Height="40" Width="40" HorizontalAlignment="Left" RenderTransformOrigin="0.5,0.5">
+                        <Image.RenderTransform>
+                            <ScaleTransform ScaleX="-1"/>
+                        </Image.RenderTransform>
+                    </Image>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom">
+                        <Label Width="30"/>
+                        <Border Background="Salmon" CornerRadius="5">
+                            <Label Name="label_timezone" Content="+8" FontSize="10" Foreground="White" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Border>
+                    </StackPanel>
+                    
+                </Grid>
+                <Label Grid.Column="1" x:Name="label_clock" Content="--" Foreground="Salmon" FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Center"/>
             </Grid>
-            <Grid Grid.Row="1" Grid.Column="3"
-                  Background="OldLace">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0" Margin="10" VerticalAlignment="Center">
-                    <Image Source="/Resource/local.png" Height="35" Width="35"/>
-                </StackPanel>
-                <Label Grid.Column="1" x:Name="label_time_local" Content="--" Foreground="Salmon" FontSize="18" VerticalAlignment="Center"/>
-            </Grid>
-            <Grid Grid.Row="1" Grid.Column="5" Background="LightSalmon" ToolTip="Watch RMTV">
+            <Grid Grid.Row="1" Grid.Column="3" Background="LightSalmon" ToolTip="Watch RMTV">
                 <Image Source="/Resource/tv.png" Height="40"/>
                 <Rectangle Fill="Transparent" PreviewMouseDown="TV_PreviewMouseDown"/>
             </Grid>
-            <Grid Grid.Row="1" Grid.Column="7" Background="LightSalmon" ToolTip="Time Table">
+            <Grid Grid.Row="1" Grid.Column="5" Background="LightSalmon" ToolTip="Time Table">
                 <Image Source="/Resource/timetable.png" Height="40"/>
                 <Rectangle Fill="Transparent" PreviewMouseDown="TimeTable_PreviewMouseDown"/>
+            </Grid>
+            <Grid Grid.Row="1" Grid.Column="7" Background="LightSalmon" ToolTip="Setting">
+                <Image Source="/Resource/setting.png" Height="40"/>
+                <Rectangle Fill="Transparent" PreviewMouseDown="Setting_PreviewMouseDown"/>
             </Grid>
             <Grid Grid.Row="1" Grid.Column="9" Background="LightSalmon" ToolTip="Information">
                 <Image Source="/Resource/info.png" Width="20"/>
@@ -238,7 +241,13 @@
                                     </Style>
                                 </DataGridTextColumn.CellStyle>
                             </DataGridTextColumn>
-                            <DataGridTextColumn  Header="Language" Binding="{Binding Language}" Width="Auto"/>
+                            <DataGridTextColumn  Header="Channel" Binding="{Binding Channel}" Width="Auto">
+                                <DataGridTextColumn.CellStyle>
+                                    <Style TargetType="DataGridCell">
+                                        <Setter Property="ToolTip" Value="{Binding ChannelLink}" />
+                                    </Style>
+                                </DataGridTextColumn.CellStyle>
+                            </DataGridTextColumn>
                             <DataGridTextColumn Header="Start Time" Binding="{Binding StartTime,StringFormat='HH:mm:ss'}" Width="70">
                                 <DataGridTextColumn.CellStyle>
                                     <Style TargetType="DataGridCell">

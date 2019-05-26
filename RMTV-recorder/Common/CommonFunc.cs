@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading;
 using System.Windows;
@@ -74,32 +76,55 @@ namespace RMTV_recorder
             Process.Start(psi);
         }
 
-        public static DateTime ConvertDateTime2Local(DateTime datetime_spain)
+        public static void IntialUniqleString()
         {
-            TimeZoneInfo timeZoneInfo_spain = TimeZoneInfo.FindSystemTimeZoneById(Parameter._timezoneIdSpain);
-            DateTime datetime_Unspec = DateTime.SpecifyKind(datetime_spain, DateTimeKind.Unspecified);
-            DateTime datetime_Utc = TimeZoneInfo.ConvertTimeToUtc(datetime_Unspec, timeZoneInfo_spain);
+#if DEBUG
+            Global._uniqueStr += "debugtest";
+#else
+            Global._uniqueStr += CommonFunc.GetKeyFileStr();
+#endif
+        }
+
+        public static string GetKeyFileStr()
+        {
+            string strKey = "";
+            if (File.Exists(Parameter._keyfile_Path))
+            {
+                using (StreamReader reader = new StreamReader(Parameter._keyfile_Path))
+                {
+                    strKey = reader.ReadLine() ?? "";
+                }
+            }
+
+            return strKey;
+        }
+
+        public static DateTime ConvertDateTime2Local(string timezoneId, DateTime datetime_zone)
+        {
+            TimeZoneInfo timeZoneInfo_zone = TimeZoneInfo.FindSystemTimeZoneById(timezoneId);
+            DateTime datetime_Unspec = DateTime.SpecifyKind(datetime_zone, DateTimeKind.Unspecified);
+            DateTime datetime_Utc = TimeZoneInfo.ConvertTimeToUtc(datetime_Unspec, timeZoneInfo_zone);
             DateTime datetime_local = datetime_Utc.ToLocalTime();
 
             return datetime_local;
         }
 
-        public static DateTime ConvertDateTime2Spain(DateTime datetime_local)
+        public static DateTime ConvertDateTime2Zone(string timezoneId, DateTime datetime_local)
         {
             datetime_local = DateTime.SpecifyKind(datetime_local, DateTimeKind.Local);
-            DateTime datetime_spain = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(datetime_local.ToUniversalTime(), Parameter._timezoneIdSpain);
+            DateTime datetime_zone = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(datetime_local.ToUniversalTime(), timezoneId);
 
-            return datetime_spain;
+            return datetime_zone;
         }
 
-        public static DateTime GetSpainTime()
+        public static DateTime GetZoneTime(string timezoneId)
         {
-            return ConvertDateTime2Spain(DateTime.Now);
+            return ConvertDateTime2Zone(timezoneId, DateTime.Now);
         }
 
-        public static DateTime SetSpainTime(int hour, int minute)
+        public static DateTime SetZoneTime(string timezoneId, int hour, int minute)
         {
-            DateTime dateNow = GetSpainTime();
+            DateTime dateNow = GetZoneTime(timezoneId);
             DateTime dateReset = dateNow.AddHours(dateNow.Hour * (-1))
                                                .AddMinutes(dateNow.Minute * (-1))
                                                .AddSeconds(dateNow.Second * (-1))
@@ -107,6 +132,37 @@ namespace RMTV_recorder
 
             DateTime date = dateReset.AddHours(hour).AddMinutes(minute);
             return date;
+        }
+
+        public static string GetTimeZoneHour(string timezoneId)
+        {
+            double timeZoneHour = 0;
+            try
+            {
+                TimeZoneInfo info = TimeZoneInfo.FindSystemTimeZoneById(timezoneId);
+                timeZoneHour = info.BaseUtcOffset.TotalHours;
+            }
+            catch
+            {
+
+            }
+
+            return timeZoneHour < 0 ? timeZoneHour.ToString() : "+" + timeZoneHour.ToString();
+        }
+
+        public static string GetTimeZoneDisplayName(string timezoneId)
+        {
+            string timeZoneName = "";
+            try
+            {
+                timeZoneName = TimeZoneInfo.FindSystemTimeZoneById(Global._timezoneId).DisplayName;
+            }
+            catch
+            {
+
+            }
+
+            return timeZoneName;
         }
 
         public static void UpdateM3U8()
@@ -155,6 +211,21 @@ namespace RMTV_recorder
             }
 
             return TimeSpan.Zero;
+        }
+
+        public static bool IsUrlValid(string url)
+        {
+            try
+            {
+                WebRequest webRequest = WebRequest.Create(url);
+                WebResponse webResponse = webRequest.GetResponse();
+            }
+            catch
+            {
+                return false;
+            }
+
+            return true;
         }
 
         public static void ToastMessage(Label label, string message, int msg_duration)

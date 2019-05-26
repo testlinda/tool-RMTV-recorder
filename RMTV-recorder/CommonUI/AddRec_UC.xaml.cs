@@ -28,9 +28,32 @@ namespace RMTV_recorder
             Initializaton();
         }
 
+        public string TimeZoneString
+        {
+            get
+            {
+                return "(UTC " + CommonFunc.GetTimeZoneHour(Global._timezoneId) + ")";
+            }
+        }
+
+        public string TimeZoneToolTip
+        {
+            get
+            {
+                return CommonFunc.GetTimeZoneDisplayName(Global._timezoneId);
+            }
+        }
+
         private void Initializaton()
         {
+            this.DataContext = this;
+
             InitailEndTime();
+            
+            if (Global._debugmode)
+            {
+                rb_channel_custom.Visibility = Visibility.Visible;
+            }
         }
 
         private void Button_Close_Click(object sender, RoutedEventArgs e)
@@ -50,10 +73,12 @@ namespace RMTV_recorder
                 RecObj recObj = new RecObj
                 {
                     Index = GetIndex(),
-                    Language = GetLanguage(),
+                    Channel = GetChannel(),
+                    ChannelLink = GetChannelLink(),
                     StartTime = GetStartTime(),
                     EndTime = GetEndTime(),
                     Duration = GetDuration(),
+                    TimeZoneId = Global._timezoneId,
                     Status = RecObj.RecordStatus.Scheduled,
                     Log = "",
                     RetryTimes = 0,
@@ -66,11 +91,31 @@ namespace RMTV_recorder
             }
         }
 
+        private void btnFileSelect_Click(object sender, RoutedEventArgs e)
+        {
+            Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
+            openFileDialog.Filter = "Stream files (*.m3u8)|*.m3u8|All files (*.*)|*.*";
+            openFileDialog.InitialDirectory = Parameter._resourceFullPath;
+
+            if (openFileDialog.ShowDialog() == true)
+                tboxFilePath.Text = openFileDialog.FileName;
+        }
+
+        private void Channel_RadioButton_CheckChanged(object sender, RoutedEventArgs e)
+        {
+            if (rb_channel_custom == null || !Global._debugmode)
+                return;
+
+            RadioButton rb = (RadioButton)sender;
+            grid_custom.Visibility = (rb.Name.Equals(rb_channel_custom.Name)) ? Visibility.Visible : Visibility.Collapsed;
+        }
+
         private bool CheckData()
         {
             if (!IsStartTimeDataAcceptable() ||
                 !IsEndTimeDataAcceptable() ||
-                !IsDurationDataAcceptable())
+                !IsDurationDataAcceptable() ||
+                !IsCustomDataAcceptable())
                 return false;
 
             return true;
@@ -119,7 +164,7 @@ namespace RMTV_recorder
                         return false;
                     }
 
-                    if (GetStartTime().Day > CommonFunc.GetSpainTime().Day)
+                    if (GetStartTime().Day > CommonFunc.GetZoneTime(Global._timezoneId).Day)
                     {
                         if (int.Parse(tb_endtime_hour.Text) * 100 + int.Parse(tb_endtime_min.Text) <=
                             int.Parse(tb_statrttime_hour.Text) * 100 + int.Parse(tb_statrttime_hour.Text))
@@ -153,6 +198,32 @@ namespace RMTV_recorder
             }
 
             return true;
+        }
+
+        private bool IsCustomDataAcceptable()
+        {
+            if (rb_channel_custom.IsChecked == true && tboxFilePath.Text.Length == 0)
+            {
+                MessageBox.Show("Custom stream path is empty.", "Error");
+                return false;
+            }
+
+            if (cb_verify.IsChecked == false && !IsChannelLinkAvailable())
+            {
+                MessageBox.Show("Custom stream path is invalid.", "Error");
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool IsChannelLinkAvailable()
+        {
+            string link = tboxFilePath.Text;
+            bool IsFileExist = System.IO.File.Exists(link);
+            bool IsUrlAccessible = CommonFunc.IsUrlValid(link);
+
+            return IsFileExist || IsUrlAccessible;
         }
 
         private bool IsPreviousTime(DateTime time1, DateTime time2) //true, if time2 >= time1
@@ -190,12 +261,24 @@ namespace RMTV_recorder
             return Global._groupRecObj.Count + 1;
         }
 
-        private string GetLanguage()
+        private string GetChannel()
         {
-            if (rb_lang_spanish.IsChecked == true)
-                return Parameter.Language_Spanish ;
+            if (rb_channel_spanish.IsChecked == true)
+                return Parameter.Channel_Spanish;
+            else if (rb_channel_custom.IsChecked == true)
+                return Parameter.Channel_Custom;
             else
-                return Parameter.Language_English;
+                return Parameter.Channel_English;
+        }
+
+        private string GetChannelLink()
+        {
+            if (rb_channel_spanish.IsChecked == true)
+                return Parameter.Channel_Spanish;
+            else if (rb_channel_custom.IsChecked == true)
+                return tboxFilePath.Text;
+            else
+                return Parameter.Channel_English;
         }
 
         private DateTime GetStartTime()
@@ -204,14 +287,14 @@ namespace RMTV_recorder
 
             if (rb_starttime_now.IsChecked == true)
             {
-                date = CommonFunc.GetSpainTime().AddSeconds(Parameter.delay_sec);
+                date = CommonFunc.GetZoneTime(Global._timezoneId).AddSeconds(Parameter.delay_sec);
             }
             else
             {
-                date = CommonFunc.SetSpainTime(int.Parse(tb_statrttime_hour.Text),
+                date = CommonFunc.SetZoneTime(Global._timezoneId, int.Parse(tb_statrttime_hour.Text),
                                     int.Parse(tb_statrttime_min.Text));
 
-                if (IsPreviousTime(date, CommonFunc.GetSpainTime()))
+                if (IsPreviousTime(date, CommonFunc.GetZoneTime(Global._timezoneId)))
                 {
                     date = date.AddDays(1);
                 }
@@ -226,7 +309,7 @@ namespace RMTV_recorder
 
             if (rb_set_endtime.IsChecked == true)
             {
-                date = CommonFunc.SetSpainTime(int.Parse(tb_endtime_hour.Text),
+                date = CommonFunc.SetZoneTime(Global._timezoneId, int.Parse(tb_endtime_hour.Text),
                                     int.Parse(tb_endtime_min.Text));
 
                 if (IsPreviousTime(date, GetStartTime()))
@@ -249,8 +332,8 @@ namespace RMTV_recorder
 
         private void InitailEndTime()
         {
-            tb_endtime_hour.Text = CommonFunc.GetSpainTime().AddHours(1).Hour.ToString("00");
-            tb_endtime_min.Text = CommonFunc.GetSpainTime().Minute.ToString("00");
+            tb_endtime_hour.Text = CommonFunc.GetZoneTime(Global._timezoneId).AddHours(1).Hour.ToString("00");
+            tb_endtime_min.Text = CommonFunc.GetZoneTime(Global._timezoneId).Minute.ToString("00");
         }
 
         private void textBox_TextChanged(object sender, TextChangedEventArgs e)
@@ -304,6 +387,11 @@ namespace RMTV_recorder
             tb_duration_min.IsEnabled = !(rb_set_endtime.IsChecked == true);
             tb_duration_hour.Text = !(rb_set_endtime.IsChecked == true) ? "1" : "";
             tb_duration_min.Text = !(rb_set_endtime.IsChecked == true) ? "0" : "";
+        }
+
+        private void FileSelect_Click(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }
