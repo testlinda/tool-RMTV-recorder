@@ -53,6 +53,7 @@ namespace RMTV_recorder
             if (Global._debugmode)
             {
                 rb_channel_custom.Visibility = Visibility.Visible;
+                rb_channel_custom.IsChecked = true;
             }
         }
 
@@ -389,9 +390,12 @@ namespace RMTV_recorder
             tb_duration_min.Text = !(rb_set_endtime.IsChecked == true) ? "0" : "";
         }
 
-        private void FileSelect_Click(object sender, RoutedEventArgs e)
+        private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-
+            if (e.Key == Key.Enter)
+            {
+                btn_ok.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            }
         }
     }
 }

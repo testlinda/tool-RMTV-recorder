@@ -47,14 +47,14 @@
                         </Image.RenderTransform>
                     </Image>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom">
-                        <Label Width="30"/>
+                        <Label Width="28"/>
                         <Border Background="Salmon" CornerRadius="5">
-                            <Label Name="label_timezone" Content="+8" FontSize="10" Foreground="White" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            <Label Name="label_timezone" Foreground="White" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                         </Border>
                     </StackPanel>
                     
                 </Grid>
-                <Label Grid.Column="1" x:Name="label_clock" Content="--" Foreground="Salmon" FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                <Label Grid.Column="1" x:Name="label_clock" Content="--" Foreground="Salmon" FontSize="20" VerticalAlignment="Center"/>
             </Grid>
             <Grid Grid.Row="1" Grid.Column="3" Background="LightSalmon" ToolTip="Watch RMTV">
                 <Image Source="/Resource/tv.png" Height="40"/>
@@ -226,7 +226,7 @@
                     </StackPanel>
                 </Grid>
                 <Grid Grid.Row="1" Margin="0,10">
-                    <DataGrid Name="dgRecObj" Height="230"
+                    <DataGrid Name="dgRecObj" Height="220"
                                               IsReadOnly="True"
                                               AutoGenerateColumns="False"
                                               CanUserResizeColumns="False" CanUserResizeRows="False"

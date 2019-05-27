@@ -80,9 +80,9 @@
                 <RadioButton GroupName="starttime" VerticalContentAlignment="Center" Checked="RadioButton_StartTime_CheckedChanged">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <Label Content="At"/>
-                        <TextBox x:Name="tb_statrttime_hour" Width="30" MaxLength="2" TextChanged="textBox_TextChanged" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsEnabled="False"/>
+                        <TextBox x:Name="tb_statrttime_hour" Width="30" MaxLength="2" TextChanged="textBox_TextChanged" PreviewKeyDown="Window_PreviewKeyDown" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsEnabled="False"/>
                         <Label Content=":"/>
-                        <TextBox x:Name="tb_statrttime_min" Width="30" MaxLength="2" TextChanged="textBox_TextChanged" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsEnabled="False"/>
+                        <TextBox x:Name="tb_statrttime_min" Width="30" MaxLength="2" TextChanged="textBox_TextChanged" PreviewKeyDown="Window_PreviewKeyDown" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsEnabled="False"/>
                         <Label Content="{Binding Path=TimeZoneString}" ToolTip="{Binding Path=TimeZoneToolTip}"/>
                     </StackPanel>
                 </RadioButton>
@@ -92,9 +92,9 @@
             <RadioButton GroupName="endtime" x:Name="rb_set_endtime" IsChecked="True" VerticalContentAlignment="Center" Checked="RadioButton_EndTime_CheckedChanged">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <Label Content="At"/>
-                    <TextBox x:Name="tb_endtime_hour" Width="30" MaxLength="2" TextChanged="textBox_TextChanged" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                    <TextBox x:Name="tb_endtime_hour" Width="30" MaxLength="2" TextChanged="textBox_TextChanged" PreviewKeyDown="Window_PreviewKeyDown" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
                     <Label Content=":"/>
-                    <TextBox x:Name="tb_endtime_min" Width="30" MaxLength="2" TextChanged="textBox_TextChanged" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                    <TextBox x:Name="tb_endtime_min" Width="30" MaxLength="2" TextChanged="textBox_TextChanged" PreviewKeyDown="Window_PreviewKeyDown" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
                     <Label Content="{Binding Path=TimeZoneString}" ToolTip="{Binding Path=TimeZoneToolTip}"/>
                 </StackPanel>
             </RadioButton>
@@ -103,9 +103,9 @@
             <RadioButton Grid.Row="3" Grid.Column="2" GroupName="endtime" VerticalContentAlignment="Center" Checked="RadioButton_EndTime_CheckedChanged">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <Label Content="Or duration"/>
-                    <TextBox x:Name="tb_duration_hour" Width="30" MaxLength="2" TextChanged="textBox_TextChanged" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsEnabled="False"/>
+                    <TextBox x:Name="tb_duration_hour" Width="30" MaxLength="2" TextChanged="textBox_TextChanged" PreviewKeyDown="Window_PreviewKeyDown" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsEnabled="False"/>
                     <Label Content="hour"/>
-                    <TextBox x:Name="tb_duration_min" Width="30" MaxLength="3" TextChanged="textBox_TextChanged" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsEnabled="False"/>
+                    <TextBox x:Name="tb_duration_min" Width="30" MaxLength="3" TextChanged="textBox_TextChanged" PreviewKeyDown="Window_PreviewKeyDown" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsEnabled="False"/>
                     <Label Content="minutes"/>
                 </StackPanel>
             </RadioButton>
@@ -113,7 +113,7 @@
         <StackPanel Grid.Row="5" Grid.Column="2" Margin="0,10" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
             <Button Content="Cancel" Height="30" Width="60" Background="Transparent" Click="Button_Close_Click"/>
             <Label Width="10"/>
-            <Button Content="Confirm" Height="30" Width="60" Background="Salmon" Click="Button_Confirm_Click"/>
+            <Button Name="btn_ok"  Content="Confirm" Height="30" Width="60" Background="Salmon" Click="Button_Confirm_Click"/>
         </StackPanel>
     </Grid>
 </local:ucCustom>

@@ -48,7 +48,6 @@ mkdir %PACKDIR%
 copy %RELEASEPATH%\RMTV-recorder.exe %PACKDIR%
 xcopy /s /e /h /I /y %RELEASEPATH%\Resource %PACKDIR%\Resource
 
-@ECHO ON
 %ZIPPATH% a -r %PACKDIR%.zip %PACKDIR%
 rmdir /s/q %PACKDIR%
 

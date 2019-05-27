@@ -126,8 +126,7 @@ namespace RMTV_recorder
 
         private void RunClock()
         {
-            label_timezone.Content = CommonFunc.GetTimeZoneHour(Global._timezoneId);
-            grid_clock.ToolTip = TimeZoneInfo.FindSystemTimeZoneById(Global._timezoneId).DisplayName;
+            UpdateClock();
 
             clock = new Clock(this, label_clock, Global._timezoneId);
             clock.StartClock();
@@ -137,8 +136,6 @@ namespace RMTV_recorder
         {
             System.IO.Directory.CreateDirectory(Parameter._outputPath);
         }
-
-        
 
         private void InitialUI()
         {
@@ -510,8 +507,8 @@ namespace RMTV_recorder
 
             if (wincustom.ShowDialog() == true)
             {
-
                 RefreshSetting();
+                IniHelper.WriteValue(Parameter._iniSectionSetting, Parameter._iniKeyTimeZoneId, Global._timezoneId, Parameter._setting_Path);
             }
             
         }
@@ -519,12 +516,12 @@ namespace RMTV_recorder
         private void RefreshSetting()
         {
             UpdateClock();
+            clock.UpdateTimeZone(Global._timezoneId);
         }
 
         private void UpdateClock()
         {
-            label_timezone.Content = CommonFunc.GetTimeZoneHour(Global._timezoneId);
-            clock.UpdateTimeZone(Global._timezoneId);
+            label_timezone.Content = "UTC " + CommonFunc.GetTimeZoneHour(Global._timezoneId);
             grid_clock.ToolTip = CommonFunc.GetTimeZoneDisplayName(Global._timezoneId);
         }
 
