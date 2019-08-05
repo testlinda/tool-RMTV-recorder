@@ -4,8 +4,9 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:RMTV_recorder"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
              mc:Ignorable="d" 
-             Height="270" Width="350" Background="OldLace">
+             Height="Auto" Width="350" Background="OldLace">
     <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -13,7 +14,9 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="30" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
@@ -25,7 +28,7 @@
         <Label Grid.Row="3" Grid.Column="0" Content="End Time" VerticalAlignment="Center" FontWeight="ExtraBold" Foreground="Salmon"/>
         <Grid Grid.Row="0" Grid.Column="2">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Height="40">
-                <RadioButton GroupName="channel" x:Name="rb_channel_spanish" IsChecked="True" VerticalContentAlignment="Center"
+                <RadioButton GroupName="channel" Name="rb_channel_spanish" IsChecked="True" VerticalContentAlignment="Center"
                              Checked="Channel_RadioButton_CheckChanged">
                     <Label Content="Spanish"/>
                 </RadioButton>
@@ -35,8 +38,8 @@
                     <Label Content="English"/>
                 </RadioButton>
                 <Label Width="10"/>
-                <RadioButton GroupName="channel" VerticalContentAlignment="Center" x:Name="rb_channel_custom"
-                             Checked="Channel_RadioButton_CheckChanged" Visibility="Collapsed">
+                <RadioButton GroupName="channel" VerticalContentAlignment="Center" Name="rb_channel_custom"
+                             Checked="Channel_RadioButton_CheckChanged">
                     <Label Content="Custom" Foreground="Firebrick"/>
                 </RadioButton>
             </StackPanel>
@@ -73,28 +76,33 @@
             </CheckBox>
         </Grid>
         <Grid Grid.Row="2" Grid.Column="2" Height="40">
-                <StackPanel  Orientation="Horizontal" VerticalAlignment="Center">
-                <RadioButton GroupName="starttime" x:Name="rb_starttime_now" IsChecked="True" VerticalContentAlignment="Center" Checked="RadioButton_StartTime_CheckedChanged">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <RadioButton GroupName="starttime" Name="rb_starttime_now" 
+                             IsChecked="True" 
+                             VerticalContentAlignment="Center" 
+                             Checked="RadioButton_StartTime_CheckedChanged">
                     <Label Content="Now"/>
                 </RadioButton>
-                <RadioButton GroupName="starttime" VerticalContentAlignment="Center" Checked="RadioButton_StartTime_CheckedChanged">
+                <RadioButton GroupName="starttime" 
+                             VerticalContentAlignment="Center" 
+                             Checked="RadioButton_StartTime_CheckedChanged">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <Label Content="At"/>
-                        <TextBox x:Name="tb_statrttime_hour" Width="30" MaxLength="2" TextChanged="textBox_TextChanged" PreviewKeyDown="Window_PreviewKeyDown" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsEnabled="False"/>
+                        <TextBox Name="tb_statrttime_hour" Width="30" MaxLength="2" TextChanged="textBox_DigitOnly" PreviewKeyDown="Window_PreviewKeyDown" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsEnabled="False"/>
                         <Label Content=":"/>
-                        <TextBox x:Name="tb_statrttime_min" Width="30" MaxLength="2" TextChanged="textBox_TextChanged" PreviewKeyDown="Window_PreviewKeyDown" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsEnabled="False"/>
+                        <TextBox Name="tb_statrttime_min" Width="30" MaxLength="2" TextChanged="textBox_DigitOnly" PreviewKeyDown="Window_PreviewKeyDown" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsEnabled="False"/>
                         <Label Content="{Binding Path=TimeZoneString}" ToolTip="{Binding Path=TimeZoneToolTip}"/>
                     </StackPanel>
                 </RadioButton>
             </StackPanel>
         </Grid>
         <Grid Grid.Row="3" Grid.Column="2" Height="40">
-            <RadioButton GroupName="endtime" x:Name="rb_set_endtime" IsChecked="True" VerticalContentAlignment="Center" Checked="RadioButton_EndTime_CheckedChanged">
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+            <RadioButton GroupName="endtime" Name="rb_set_endtime" IsChecked="True" VerticalContentAlignment="Center" Checked="RadioButton_EndTime_CheckedChanged">
+                <StackPanel Name="sp_endtime_time" Orientation="Horizontal" VerticalAlignment="Center">
                     <Label Content="At"/>
-                    <TextBox x:Name="tb_endtime_hour" Width="30" MaxLength="2" TextChanged="textBox_TextChanged" PreviewKeyDown="Window_PreviewKeyDown" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                    <TextBox Name="tb_endtime_hour" Width="30" MaxLength="2" TextChanged="textBox_DigitOnly" PreviewKeyDown="Window_PreviewKeyDown" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
                     <Label Content=":"/>
-                    <TextBox x:Name="tb_endtime_min" Width="30" MaxLength="2" TextChanged="textBox_TextChanged" PreviewKeyDown="Window_PreviewKeyDown" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                    <TextBox Name="tb_endtime_min" Width="30" MaxLength="2" TextChanged="textBox_DigitOnly" PreviewKeyDown="Window_PreviewKeyDown" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
                     <Label Content="{Binding Path=TimeZoneString}" ToolTip="{Binding Path=TimeZoneToolTip}"/>
                 </StackPanel>
             </RadioButton>
@@ -102,18 +110,81 @@
         <Grid Grid.Row="4" Grid.Column="2" Height="40">
             <RadioButton Grid.Row="3" Grid.Column="2" GroupName="endtime" VerticalContentAlignment="Center" Checked="RadioButton_EndTime_CheckedChanged">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <Label Content="Or duration"/>
-                    <TextBox x:Name="tb_duration_hour" Width="30" MaxLength="2" TextChanged="textBox_TextChanged" PreviewKeyDown="Window_PreviewKeyDown" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsEnabled="False"/>
-                    <Label Content="hour"/>
-                    <TextBox x:Name="tb_duration_min" Width="30" MaxLength="3" TextChanged="textBox_TextChanged" PreviewKeyDown="Window_PreviewKeyDown" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsEnabled="False"/>
-                    <Label Content="minutes"/>
+                    <Label Content="Or duration:"/>
+                    <TextBox Name="tb_duration_hour" Width="30" MaxLength="2" TextChanged="textBox_DigitOnly" PreviewKeyDown="Window_PreviewKeyDown" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsEnabled="False"/>
+                    <Label Content="hr"/>
+                    <TextBox Name="tb_duration_min" Width="30" MaxLength="3" TextChanged="textBox_DigitOnly" PreviewKeyDown="Window_PreviewKeyDown" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsEnabled="False"/>
+                    <Label Content="min"/>
                 </StackPanel>
             </RadioButton>
         </Grid>
-        <StackPanel Grid.Row="5" Grid.Column="2" Margin="0,10" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+        <Grid Grid.Row="5" Grid.ColumnSpan="3">
+            <Expander Name="expander_advanced">
+                <Expander.Header>
+                    <TextBlock Text="Advanced" FontWeight="Bold" Foreground="Firebrick"/>
+                </Expander.Header>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="5" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Label Grid.Row="0" Grid.Column="0" Content="Date" VerticalAlignment="Center" FontWeight="ExtraBold" Foreground="Salmon"/>
+                    <Label Grid.Row="1" Grid.Column="0" Content="Repeat" VerticalAlignment="Center" FontWeight="ExtraBold" Foreground="Salmon"/>
+                    <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Height="40">
+                        <StackPanel  Orientation="Horizontal" VerticalAlignment="Center">
+                            <RadioButton GroupName="startdate" Name="rb_startdate_today" 
+                                         IsChecked="True" 
+                                         VerticalContentAlignment="Center" 
+                                         Checked="RadioButton_StartDate_CheckedChanged">
+                                <Label Content="Today"/>
+                            </RadioButton>
+                            <Label Width="10"/>
+                            <RadioButton GroupName="startdate" Name="rb_startdate_specified" 
+                                         VerticalContentAlignment="Center" 
+                                         Checked="RadioButton_StartDate_CheckedChanged">
+                                <DatePicker Name="datepicker_startdate"
+                                            IsEnabled="False"
+                                            VerticalAlignment="Center" 
+                                            HorizontalAlignment="Left"
+                                            SelectedDate="{x:Static sys:DateTime.Now}"
+                                            SelectedDateFormat="Short"/>
+                            </RadioButton>
+                            
+                        </StackPanel>
+                    </StackPanel>
+                    <Grid Grid.Row="1" Grid.Column="2" Height="40">
+                        <StackPanel  Orientation="Horizontal" VerticalAlignment="Center">
+                            <RadioButton GroupName="repeat" Name="rb_repeat_none" 
+                                         IsChecked="True" 
+                                         VerticalContentAlignment="Center" 
+                                         Checked="RadioButton_Repeat_CheckedChanged">
+                                <Label Content="None"/>
+                            </RadioButton>
+                            <Label Width="10"/>
+                            <RadioButton GroupName="repeat" Name="rb_repeat_times" 
+                                         VerticalContentAlignment="Center" 
+                                         Checked="RadioButton_Repeat_CheckedChanged">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBox Name="tb_repeat_times" Width="30" MaxLength="2" TextChanged="textBox_DigitOnly" PreviewKeyDown="Window_PreviewKeyDown" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsEnabled="False"/>
+                                    <Label Content="days"/>
+                                </StackPanel>
+                            </RadioButton>
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </Expander>
+        </Grid>
+        <StackPanel Grid.Row="7" Grid.Column="2" Margin="0,10" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
             <Button Content="Cancel" Height="30" Width="60" Background="Transparent" Click="Button_Close_Click"/>
             <Label Width="10"/>
-            <Button Name="btn_ok"  Content="Confirm" Height="30" Width="60" Background="Salmon" Click="Button_Confirm_Click"/>
+            <Button Name="btn_ok" Content="Confirm" 
+                    Height="30" Width="60" Background="Salmon" 
+                    Click="Button_Confirm_Click"/>
         </StackPanel>
     </Grid>
 </local:ucCustom>

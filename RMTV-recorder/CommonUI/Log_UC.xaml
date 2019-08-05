@@ -5,15 +5,15 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:RMTV_recorder"
              mc:Ignorable="d" 
-             Height="500" Width="500">
+             Height="Auto" Width="500">
     <Grid Margin="10">
         <Grid.RowDefinitions>
-            <RowDefinition Height="176" />
-            <RowDefinition Height="255"/>
-            <RowDefinition Height="10" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="20" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="20" />
         </Grid.RowDefinitions>
-        <RichTextBox Grid.Row="0" x:Name="tb_log" IsReadOnly="True" Height="430" Background="OldLace" ScrollViewer.VerticalScrollBarVisibility="Auto" Margin="0,0,0,1" Grid.RowSpan="2"/>
-        <Button Grid.Row="3" x:Name="btn_close" Content="Close" Width="50" Click="Button_Close_Click" Margin="215,0"/>
+        <RichTextBox Grid.Row="0" x:Name="tb_log" IsReadOnly="True" Height="450" Background="OldLace" ScrollViewer.VerticalScrollBarVisibility="Auto" />
+        <Button Grid.Row="2" x:Name="btn_close" Content="Close" Width="50" Click="Button_Close_Click"/>
     </Grid>
 </local:ucCustom>

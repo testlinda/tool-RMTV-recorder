@@ -14,20 +14,32 @@ namespace RMTV_recorder
 
         }
 
-        public void DownloadESM3U8()
+        public bool Download(string url, string path)
         {
+            bool ret = true;
             using (WebClient client = new WebClient())
             {
-                client.DownloadFile("https://rmtv24hweblive-lh.akamaihd.net/i/rmtv24hwebes_1@300661/master.m3u8", Parameter._m3u8_es_Path);
+                try
+                {
+                    client.DownloadFile(url, path);
+                }
+                catch
+                {
+                    ret = false;
+                }
             }
+
+            return ret;
         }
 
-        public void DownloadENM3U8()
+        public bool DownloadESM3U8()
         {
-            using (WebClient client = new WebClient())
-            {
-                client.DownloadFile("https://rmtv24hweblive-lh.akamaihd.net/i/rmtv24hweben_1@300662/master.m3u8", Parameter._m3u8_en_Path);
-            }
+            return Download(Parameter.uri_RMTV_m3u8_es, Parameter._m3u8_es_Path);
+        }
+
+        public bool DownloadENM3U8()
+        {
+            return Download(Parameter.uri_RMTV_m3u8_en, Parameter._m3u8_en_Path);
         }
 
     }

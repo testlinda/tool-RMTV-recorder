@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:RMTV_recorder"
         mc:Ignorable="d"
-        Title="" Height="100" Width="100"
+        Title="" Height="Auto" Width="Auto" SizeToContent="WidthAndHeight"
         ResizeMode="NoResize">
     <Grid Name="grid_body">
 

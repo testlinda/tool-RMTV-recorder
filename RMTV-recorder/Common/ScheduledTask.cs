@@ -12,7 +12,6 @@ namespace RMTV_recorder
     {
         private OperationHandler _operation_delegate_1 = null;
         private OperationHandler _operation_delegate_2 = null;
-        private OperationHandler _operation_delegate_3 = null;
         private DateTime _starttime = DateTime.MinValue;
 
         private CancellationTokenSource _tokenSource;
@@ -30,15 +29,6 @@ namespace RMTV_recorder
             _starttime = starttime;
             _operation_delegate_1 = operation1;
             _operation_delegate_2 = operation2;
-            Initialization();
-        }
-
-        public ScheduledTask(DateTime starttime, OperationHandler operation1, OperationHandler operation2, OperationHandler operation3)
-        {
-            _starttime = starttime;
-            _operation_delegate_1 = operation1;
-            _operation_delegate_2 = operation2;
-            _operation_delegate_3 = operation3;
             Initialization();
         }
 
@@ -82,17 +72,25 @@ namespace RMTV_recorder
             {
                 _operation_delegate_2();
             }
-
-            if (_operation_delegate_3 != null)
-            {
-                _operation_delegate_3();
-            }
         }
 
         public void CancelTask()
         {
-            isTaskContinued = false;
-            _tokenSource.Cancel();
+            if (_tokenSource != null)
+            {
+                isTaskContinued = false;
+                _tokenSource.Cancel();
+            }
+        }
+
+        public void Dispose()
+        {
+            if (_tokenSource != null)
+            {
+                _tokenSource.Cancel();
+                _tokenSource.Dispose();
+                _tokenSource = null;
+            }
         }
     }
 }

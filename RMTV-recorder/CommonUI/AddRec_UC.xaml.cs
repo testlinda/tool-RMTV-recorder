@@ -22,6 +22,10 @@ namespace RMTV_recorder
     /// </summary>
     public partial class AddRec_UC : ucCustom
     {
+        private DateTime temp_currenttime = DateTime.MinValue;
+        private DateTime temp_starttime = DateTime.MinValue;
+        private DateTime temp_endtime = DateTime.MinValue;
+
         public AddRec_UC()
         {
             InitializeComponent();
@@ -50,11 +54,22 @@ namespace RMTV_recorder
 
             InitailEndTime();
             
-            if (Global._debugmode)
+            if (Global._timezoneId.Equals(Parameter._timezoneIdSpain))
             {
-                rb_channel_custom.Visibility = Visibility.Visible;
+                rb_channel_spanish.IsChecked = true;
+            }
+            else
+            {
                 rb_channel_custom.IsChecked = true;
             }
+
+            expander_advanced.Visibility = Visibility.Collapsed;
+        }
+
+        private void InitailEndTime()
+        {
+            tb_endtime_hour.Text = CommonFunc.GetZoneTime(Global._timezoneId).AddHours(1).Hour.ToString("00");
+            tb_endtime_min.Text = CommonFunc.GetZoneTime(Global._timezoneId).Minute.ToString("00");
         }
 
         private void Button_Close_Click(object sender, RoutedEventArgs e)
@@ -64,29 +79,30 @@ namespace RMTV_recorder
 
         private void Button_Confirm_Click(object sender, RoutedEventArgs e)
         {
+            temp_currenttime = CommonFunc.GetZoneTime(Global._timezoneId);
+            temp_starttime = GetStartTime();
+            temp_endtime = GetEndTime();
+
             if (CheckData())
             {
-                //Debug.WriteLine(GetSpainTime());
-                //Debug.WriteLine(GetStartTime());
-                //Debug.WriteLine(GetEndTime());
-                //Debug.WriteLine(GetDuration());
-
-                RecObj recObj = new RecObj
+                for (int i = 0; i< GetRepeatDays(); i++)
                 {
-                    Index = GetIndex(),
-                    Channel = GetChannel(),
-                    ChannelLink = GetChannelLink(),
-                    StartTime = GetStartTime(),
-                    EndTime = GetEndTime(),
-                    Duration = GetDuration(),
-                    TimeZoneId = Global._timezoneId,
-                    Status = RecObj.RecordStatus.Scheduled,
-                    Log = "",
-                    RetryTimes = 0,
-                };
+                    RecObj recObj = new RecObj
+                    {
+                        Channel = GetChannel(),
+                        ChannelLink = GetChannelLink(),
+                        StartTime = temp_starttime.AddDays(i),
+                        EndTime = temp_endtime,
+                        Duration = GetDuration(),
+                        TimeZoneId = Global._timezoneId,
+                        Status = RecObj.RecordStatus.Scheduled,
+                        Log = "",
+                        RetryTimes = 0,
+                    };
 
-                recObj.Initialization();
-                CommonFunc.AddRecObj(recObj);
+                    recObj.Initialization();
+                    Global._scheduledRecObj.Add(recObj);
+                }
 
                 base.OnCloseDialog(this, true, e);
             }
@@ -104,7 +120,7 @@ namespace RMTV_recorder
 
         private void Channel_RadioButton_CheckChanged(object sender, RoutedEventArgs e)
         {
-            if (rb_channel_custom == null || !Global._debugmode)
+            if (rb_channel_custom == null)
                 return;
 
             RadioButton rb = (RadioButton)sender;
@@ -116,7 +132,8 @@ namespace RMTV_recorder
             if (!IsStartTimeDataAcceptable() ||
                 !IsEndTimeDataAcceptable() ||
                 !IsDurationDataAcceptable() ||
-                !IsCustomDataAcceptable())
+                !IsCustomDataAcceptable() ||
+                !IsRepeatDaysAcceptable())
                 return false;
 
             return true;
@@ -134,12 +151,18 @@ namespace RMTV_recorder
                 }
                 else
                 {
-                    if (int.Parse(tb_statrttime_hour.Text) > 23 ||
-                        int.Parse(tb_statrttime_min.Text) > 59)
+                    if (Convert.ToInt32(tb_statrttime_hour.Text) > 23 ||
+                        Convert.ToInt32(tb_statrttime_min.Text) > 59)
                     {
                         MessageBox.Show("Start time is invalid.", "Error");
                         return false;
                     }
+                }
+
+                if (temp_starttime < temp_currenttime)
+                {
+                    MessageBox.Show("Start time is set eailer than now.", "Error");
+                    return false;
                 }
             }
 
@@ -158,21 +181,11 @@ namespace RMTV_recorder
                 }
                 else
                 {
-                    if (int.Parse(tb_endtime_hour.Text) > 23 ||
-                        int.Parse(tb_endtime_min.Text) > 59)
+                    if (Convert.ToInt32(tb_endtime_hour.Text) > 23 ||
+                        Convert.ToInt32(tb_endtime_min.Text) > 59)
                     {
                         MessageBox.Show("End time is invalid.", "Error");
                         return false;
-                    }
-
-                    if (GetStartTime().Day > CommonFunc.GetZoneTime(Global._timezoneId).Day)
-                    {
-                        if (int.Parse(tb_endtime_hour.Text) * 100 + int.Parse(tb_endtime_min.Text) <=
-                            int.Parse(tb_statrttime_hour.Text) * 100 + int.Parse(tb_statrttime_hour.Text))
-                        {
-                            MessageBox.Show("End time is set eailer than start time.", "Error");
-                            return false;
-                        }
                     }
                 }
             }
@@ -227,6 +240,36 @@ namespace RMTV_recorder
             return IsFileExist || IsUrlAccessible;
         }
 
+        private bool IsRepeatDaysAcceptable()
+        {
+            if (rb_repeat_none.IsChecked == true)
+            {
+                return true;
+            }
+
+            if (tb_repeat_times.Text.Equals(""))
+            {
+                MessageBox.Show("Repeat days is invalid.", "Error");
+                return false;
+            }
+                
+
+            int days = GetRepeatDays();
+            if (days < 2)
+            {
+                MessageBox.Show("Repeat days can not be shorter than 2.", "Error");
+                return false;
+            }
+
+            if (days > 10)
+            {
+                MessageBox.Show("Repeat days can not be more than 10.", "Error");
+                return false;
+            }
+
+            return true;
+        }
+
         private bool IsPreviousTime(DateTime time1, DateTime time2) //true, if time2 >= time1
         {
             if (DateTime.Compare(time1, time2) <= 0)
@@ -240,13 +283,13 @@ namespace RMTV_recorder
             int duration = 0;
             if (rb_set_endtime.IsChecked == true)
             {
-                TimeSpan ts = GetEndTime() - GetStartTime();
+                TimeSpan ts = temp_endtime - temp_starttime;
                 double differenceInMinutes = ts.TotalMinutes;
                 duration = (int)differenceInMinutes;
             }
             else
             {
-                duration = int.Parse(tb_duration_hour.Text) * 60 + int.Parse(tb_duration_min.Text);
+                duration = Convert.ToInt32(tb_duration_hour.Text) * 60 + Convert.ToInt32(tb_duration_min.Text);
             }
 
             return duration;
@@ -255,11 +298,6 @@ namespace RMTV_recorder
         private int CalculateDuration2sec()
         {
             return CalculateDuration2min() * 60;
-        }
-
-        private int GetIndex()
-        {
-            return Global._groupRecObj.Count + 1;
         }
 
         private string GetChannel()
@@ -288,16 +326,26 @@ namespace RMTV_recorder
 
             if (rb_starttime_now.IsChecked == true)
             {
-                date = CommonFunc.GetZoneTime(Global._timezoneId).AddSeconds(Parameter.delay_sec);
+                date = temp_currenttime.AddSeconds(Parameter.delay_sec);
             }
             else
             {
-                date = CommonFunc.SetZoneTime(Global._timezoneId, int.Parse(tb_statrttime_hour.Text),
-                                    int.Parse(tb_statrttime_min.Text));
-
-                if (IsPreviousTime(date, CommonFunc.GetZoneTime(Global._timezoneId)))
+                if (rb_startdate_today.IsChecked == true)
                 {
-                    date = date.AddDays(1);
+                    date = CommonFunc.SetZoneTime(Global._timezoneId, Convert.ToInt32(tb_statrttime_hour.Text),
+                                                  Convert.ToInt32(tb_statrttime_min.Text));
+
+                    if (IsPreviousTime(date, temp_currenttime))
+                    {
+                        date = date.AddDays(1);
+                    }
+                }
+                else
+                {
+                    date = CommonFunc.SetZoneTime(Global._timezoneId,
+                                                  datepicker_startdate.SelectedDate.Value.Date,
+                                                  Convert.ToInt32(tb_statrttime_hour.Text),
+                                                  Convert.ToInt32(tb_statrttime_min.Text));
                 }
             }
 
@@ -310,17 +358,33 @@ namespace RMTV_recorder
 
             if (rb_set_endtime.IsChecked == true)
             {
-                date = CommonFunc.SetZoneTime(Global._timezoneId, int.Parse(tb_endtime_hour.Text),
-                                    int.Parse(tb_endtime_min.Text));
-
-                if (IsPreviousTime(date, GetStartTime()))
+                if (rb_startdate_today.IsChecked == true)
                 {
-                    date = date.AddDays(1);
+                    date = CommonFunc.SetZoneTime(Global._timezoneId, Convert.ToInt32(tb_endtime_hour.Text),
+                                                  Convert.ToInt32(tb_endtime_min.Text));
+
+                    if (IsPreviousTime(date, temp_starttime))
+                    {
+                        date = date.AddDays(1);
+                    }
                 }
+                else
+                {
+                    date = CommonFunc.SetZoneTime(Global._timezoneId,
+                                                  datepicker_startdate.SelectedDate.Value.Date,
+                                                  Convert.ToInt32(tb_endtime_hour.Text),
+                                                  Convert.ToInt32(tb_endtime_min.Text));
+
+                    if (IsPreviousTime(date, temp_starttime))
+                    {
+                        date = date.AddDays(1);
+                    }
+                }
+                    
             }
             else
             {
-                date = GetStartTime().AddSeconds(CalculateDuration2sec()); ;
+                date = temp_starttime.AddSeconds(CalculateDuration2sec());
             }
 
             return date;
@@ -331,13 +395,18 @@ namespace RMTV_recorder
             return CalculateDuration2min();
         }
 
-        private void InitailEndTime()
+        private int GetRepeatDays()
         {
-            tb_endtime_hour.Text = CommonFunc.GetZoneTime(Global._timezoneId).AddHours(1).Hour.ToString("00");
-            tb_endtime_min.Text = CommonFunc.GetZoneTime(Global._timezoneId).Minute.ToString("00");
+            if (rb_repeat_none.IsChecked == true)
+                return 1;
+
+            if (tb_repeat_times.Text.Equals(""))
+                return 0;
+
+            return Convert.ToInt32(tb_repeat_times.Text);
         }
 
-        private void textBox_TextChanged(object sender, TextChangedEventArgs e)
+        private void textBox_DigitOnly(object sender, TextChangedEventArgs e)
         {
             TextBox textBox = sender as TextBox;
             Int32 selectionStart = textBox.SelectionStart;
@@ -363,6 +432,14 @@ namespace RMTV_recorder
             tb_statrttime_min.IsEnabled = !(rb_starttime_now.IsChecked == true);
             tb_statrttime_hour.Text = !(rb_starttime_now.IsChecked == true)? "11":"";
             tb_statrttime_min.Text = !(rb_starttime_now.IsChecked == true) ? "00" : "";
+
+            expander_advanced.Visibility = !(rb_starttime_now.IsChecked == true) ? Visibility.Visible : Visibility.Collapsed;
+
+            if (rb_starttime_now.IsChecked == true)
+            {
+                rb_startdate_today.IsChecked = true;
+                rb_repeat_none.IsChecked = true;
+            }
         }
 
         private void RadioButton_EndTime_CheckedChanged(object sender, RoutedEventArgs e)
@@ -388,6 +465,23 @@ namespace RMTV_recorder
             tb_duration_min.IsEnabled = !(rb_set_endtime.IsChecked == true);
             tb_duration_hour.Text = !(rb_set_endtime.IsChecked == true) ? "1" : "";
             tb_duration_min.Text = !(rb_set_endtime.IsChecked == true) ? "0" : "";
+        }
+
+        private void RadioButton_StartDate_CheckedChanged(object sender, RoutedEventArgs e)
+        {
+            if (rb_startdate_today == null || rb_startdate_specified == null)
+                return;
+
+            datepicker_startdate.IsEnabled = !(rb_startdate_today.IsChecked == true);
+        }
+
+        private void RadioButton_Repeat_CheckedChanged(object sender, RoutedEventArgs e)
+        {
+            if (rb_repeat_none == null || rb_repeat_times == null)
+                return;
+
+            tb_repeat_times.IsEnabled = !(rb_repeat_none.IsChecked == true);
+            tb_repeat_times.Text = !(rb_repeat_none.IsChecked == true) ? "2" : "";
         }
 
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)

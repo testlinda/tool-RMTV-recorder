@@ -14,13 +14,13 @@ namespace RMTV_recorder
         public static readonly string _resourcePath = "Resource";
         public static readonly string _outputPath = "output";
         public static readonly string _logPath = "log";
+        public static readonly string _keyString = "aWFtYWNyYXp5bHVrYW1vZHJpY2xvdmVyLnR4dA==";
 
         public static readonly string _resourceFullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resource");
         public static readonly string _ffmpegPath = Path.Combine(_resourceFullPath, "bin\\ffmpeg.exe");
         public static readonly string _setting_Path= Path.Combine(_resourceFullPath, "setting.ini");
         public static readonly string _m3u8_es_Path = Path.Combine(_resourceFullPath, "rmtv-es.m3u8");
         public static readonly string _m3u8_en_Path = Path.Combine(_resourceFullPath, "rmtv-en.m3u8");
-        public static readonly string _keyfile_Path = Path.Combine(_resourceFullPath, "iamacrazylukamodriclover.txt");
 
         public static readonly string _timezoneIdSpain = "Romance Standard Time";
         public static readonly string _timezoneIdTaiwan = "Taipei Standard Time";
@@ -31,6 +31,8 @@ namespace RMTV_recorder
         public static readonly string Channel_Custom = "Custom";
 
         public static readonly string uri_RMTV_es = @"https://www.realmadrid.com/real-madrid-tv";
+        public static readonly string uri_RMTV_m3u8_es = @"https://rmtv24hweblive-lh.akamaihd.net/i/rmtv24hwebes_1@300661/master.m3u8";
+        public static readonly string uri_RMTV_m3u8_en = @"https://rmtv24hweblive-lh.akamaihd.net/i/rmtv24hweben_1@300662/master.m3u8";
 
         //ini setting
         public readonly static string _iniSectionSetting = "Setting";
@@ -41,7 +43,7 @@ namespace RMTV_recorder
         public static readonly int delay_sec = 1;
         public static readonly int retry_times_limit = 10;
         public static readonly int retry_wait_min_sec = 3;
-        public static readonly int retry_wait_max_sec = 15;
+        public static readonly int retry_wait_max_sec = 60;
         public static readonly int disconnection_diff_min = 5;
         public static readonly int debug_on_click = 3;
 
@@ -49,12 +51,15 @@ namespace RMTV_recorder
 
     class Global
     {
-        public static ObservableCollection<RecObj> _groupRecObj;
+        public static ScheduledRecObj _scheduledRecObj;
+        //public static ObservableCollection<RecObj> _groupRecObj;
         public static System.Windows.Forms.NotifyIcon _notifyIcon;
-        public static object _syncLock = new object();
+        //public static object _syncLock = new object();
         public static string _uniqueStr = Parameter._uniqueStrPrefix;
         public static string _timezoneId = Parameter._timezoneIdUTC;
         public static bool flagTaskComplete = false;
+        public static List<M3U8Obj> _rmtv_link_es = null;
+        public static List<M3U8Obj> _rmtv_link_en = null;
 
         public static bool _debugmode = false;
         
@@ -62,5 +67,6 @@ namespace RMTV_recorder
     }
 
     public delegate void OperationHandler();
+    public delegate bool OperationHandlerWithResult();
 
 }

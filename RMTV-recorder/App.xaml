@@ -4,6 +4,6 @@
              xmlns:local="clr-namespace:RMTV_recorder"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-        
+        <ResourceDictionary Source="Style/Style.xaml" />
     </Application.Resources>
 </Application>

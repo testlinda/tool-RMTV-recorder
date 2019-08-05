@@ -46,7 +46,7 @@ namespace RMTV_recorder
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            if (!load_success)
+            if (!load_success || !LoadResource())
             {
                 Application.Current.Shutdown();
             }
@@ -54,15 +54,12 @@ namespace RMTV_recorder
 
         private bool Intialization()
         {
-            if (!CheckbinAvailable())
-            {
-                return false;
-            }
 
 #if DEBUG
             AddTestItems();
 #endif
             LoadIni();
+            InitialCommonFunc();
             RefreshDebugMode();
             RunClock();
             InitialOutputFolder();
@@ -70,10 +67,29 @@ namespace RMTV_recorder
             InitialRecording();
             InitialNotifyIcon();
 
-            Global._groupRecObj = new ObservableCollection<RecObj>();
-            BindingOperations.EnableCollectionSynchronization(Global._groupRecObj, Global._syncLock);
-            dgRecObj.ItemsSource = Global._groupRecObj;
+            Global._scheduledRecObj = new ScheduledRecObj();
+            //Global._scheduledRecObj.RecObjs = new ObservableCollection<RecObj>();
+            //Global._groupRecObj = new ObservableCollection<RecObj>();
+            //BindingOperations.EnableCollectionSynchronization(Global._groupRecObj, Global._syncLock);
+            dgRecObj.ItemsSource = Global._scheduledRecObj.RecObjs;
             Closing += OnClosing;
+
+            return true;
+        }
+
+        private bool LoadResource()
+        {
+            if (!CheckKeyFileAvailable())
+            {
+                return false;
+            }
+            
+            if (!CommonFunc.RunWithProcessingUC(
+                            new OperationHandlerWithResult(CheckbinAvailable),
+                            "Initialing..."))
+            {
+                return false;
+            }
 
             return true;
         }
@@ -89,6 +105,12 @@ namespace RMTV_recorder
             Global._debugmode = (IniHelper.ReadValue(Parameter._iniSectionSetting, Parameter._iniKeyDebugMode, Parameter._setting_Path).Equals("Y", StringComparison.OrdinalIgnoreCase));
         }
 
+        private void InitialCommonFunc()
+        {
+            CommonFunc func = new CommonFunc();
+            func.window = this;
+        }
+
         private void CreateDefaultIniFile()
         {
             bool result = true;
@@ -96,16 +118,70 @@ namespace RMTV_recorder
             result = IniHelper.WriteValue(Parameter._iniSectionSetting, Parameter._iniKeyDebugMode, "N", Parameter._setting_Path);
         }
 
+        private bool CheckKeyFileAvailable()
+        {
+            string keyFile = CommonFunc.GetKeyfilePath();
+            if (!File.Exists(keyFile))
+            {
+                if (!CheckAuthentication())
+                {
+                    MessageBox.Show("Authentication failed!");
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         private bool CheckbinAvailable()
         {
-            if (File.Exists(Parameter._ffmpegPath) &&
-                File.Exists(Parameter._m3u8_es_Path) &&
-                File.Exists(Parameter._m3u8_en_Path) &&
-                File.Exists(Parameter._keyfile_Path))
+            if (!File.Exists(Parameter._ffmpegPath))
             {
-                return true;
+                MessageBox.Show("ffmpeg.exe does not exist!");
+                return false;
             }
-            return false;
+
+            if (!File.Exists(Parameter._m3u8_es_Path))
+            {
+                DownloadFile d = new DownloadFile();
+                if (!d.DownloadESM3U8())
+                {
+                    MessageBox.Show("Download RMTV file failed!");
+                    return false;
+                }
+            }
+
+            if (!File.Exists(Parameter._m3u8_en_Path))
+            {
+                DownloadFile d = new DownloadFile();
+                if (!d.DownloadENM3U8())
+                {
+                    MessageBox.Show("Download RMTV file failed!");
+                    return false;
+                }
+            }
+
+            M3U8 m = new M3U8();
+            if (!m.InitialM3U8List())
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool CheckAuthentication()
+        {
+            winCustom wincustom = new winCustom();
+            Authentication_UC authentication_uc = new Authentication_UC();
+
+            wincustom.winContent = authentication_uc;
+            wincustom.Title = "Authentication";
+            wincustom.Topmost = true;
+            wincustom.Owner = this;
+            wincustom.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+            wincustom.ShowInTaskbar = false;
+            return (wincustom.ShowDialog() == true);
         }
 
         private void AddTestItems()
@@ -366,6 +442,7 @@ namespace RMTV_recorder
             if (ffmpeg_manual!= null)
             {
                 ffmpeg_manual.StopRecord();
+                ffmpeg_manual.Dispose();
             }
         }
 
@@ -439,9 +516,9 @@ namespace RMTV_recorder
                     if (ffmpeg_manual != null) // manual one
                         ffmpeg_manual.KillProcess();
 
-                    if (Global._groupRecObj.Count > 0) // scheduled ones
+                    if (Global._scheduledRecObj.Count > 0) // scheduled ones
                     {
-                        foreach (RecObj obj in Global._groupRecObj)
+                        foreach (RecObj obj in Global._scheduledRecObj.RecObjs)
                         {
                             if (obj.Ffmpeg != null)
                                 obj.Ffmpeg.KillProcess();
@@ -546,11 +623,14 @@ namespace RMTV_recorder
             if (wincustom.ShowDialog() == true)
             {
 
-                if (dgRecObj.Items.Count == 1)
+                if (dgRecObj.Items.Count > 0)
                 {
-                    chechbox_isshutdown.Visibility = Visibility.Visible;
-                    chechbox_isshutdown.IsChecked = false;
-                    StartRefreshDataGrid();
+                    if (chechbox_isshutdown.Visibility != Visibility.Visible)
+                    {
+                        chechbox_isshutdown.Visibility = Visibility.Visible;
+                        chechbox_isshutdown.IsChecked = false;
+                        StartRefreshDataGrid();
+                    }
                 }
             }
         }
@@ -568,17 +648,17 @@ namespace RMTV_recorder
                         continue;
 
                     recObj.Task.CancelTask();
-                    CommonFunc.RemoveRecObj(recObj);
+                    recObj.Clean();
+                    Global._scheduledRecObj.Remove(recObj);
                 };
             }
 
-            if (Global._groupRecObj.Count == 0)
+            if (Global._scheduledRecObj.Count == 0)
             {
                 chechbox_isshutdown.Visibility = Visibility.Hidden;
                 StopRefreshDataGrid();
             }
 
-            RefreshRecObjIndex();
         }
 
         private void btn_stopRec_Click(object sender, RoutedEventArgs e)
@@ -598,12 +678,27 @@ namespace RMTV_recorder
             }
         }
 
+        void DataGrid_LoadingRow(object sender, DataGridRowEventArgs e)
+        {
+            // Adding 1 to make the row count start at 1 instead of 0
+            // as pointed out by daub815
+            e.Row.Header = (e.Row.GetIndex() + 1).ToString();
+        }
+
         private void StartRefreshDataGrid()
         {
-            timer_refreshdg = new Timer();
-            timer_refreshdg.Elapsed += new ElapsedEventHandler(OnRefreshEvent);
-            timer_refreshdg.Interval = timer_refreshdg_interval_sec * 1000;
-            timer_refreshdg.Enabled = true;
+            if (timer_refreshdg != null)
+            {
+                if (!timer_refreshdg.Enabled)
+                    timer_refreshdg.Enabled = true;
+            }
+            else
+            {
+                timer_refreshdg = new Timer();
+                timer_refreshdg.Elapsed += new ElapsedEventHandler(OnRefreshEvent);
+                timer_refreshdg.Interval = timer_refreshdg_interval_sec * 1000;
+                timer_refreshdg.Enabled = true;
+            }
         }
 
         private void StopRefreshDataGrid()
@@ -625,7 +720,6 @@ namespace RMTV_recorder
 
             if (CommonFunc.GetStatusChangedFlag())
             {
-                dgRecObj.Items.Refresh();
                 CommonFunc.ClearStatusChangedFlag();
 
                 if (chechbox_isshutdown.IsChecked == true &&
@@ -645,16 +739,17 @@ namespace RMTV_recorder
 
         private bool IsAllSceduleCompleted()
         {
-            foreach (RecObj obj in Global._groupRecObj)
+            if (Global._scheduledRecObj.Count == 0)
             {
-                if (obj.Status == RecObj.RecordStatus.Scheduled || 
-                    obj.Status == RecObj.RecordStatus.Recording ||
-                    obj.Status == RecObj.RecordStatus.Stopping)
-                {
-                    return false;
-                }
+                return true;
             }
-            return true;
+            else
+            {
+                if (Global._scheduledRecObj.Count == Global._scheduledRecObj.InactiveCount)
+                    return true;
+            }
+
+            return false;
         }
 
         private void btn_ctrlC_Click(object sender, RoutedEventArgs e)
@@ -673,15 +768,7 @@ namespace RMTV_recorder
 
         private void btn_updateM3U8_Click(object sender, RoutedEventArgs e)
         {
-            CommonFunc.UpdateM3U8();
-        }
-
-        private void RefreshRecObjIndex()
-        {
-            foreach (RecObj obj in Global._groupRecObj)
-            {
-                obj.Index = Global._groupRecObj.IndexOf(obj) + 1;
-            }
+            CommonFunc.RunWithProcessingUC(new OperationHandlerWithResult(CommonFunc.DownloadM3U8), "Downloading fils...");
         }
 
         private void btn_openlog_s_Click(object sender, RoutedEventArgs e)

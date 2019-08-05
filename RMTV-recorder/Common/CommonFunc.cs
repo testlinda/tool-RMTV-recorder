@@ -15,6 +15,16 @@ namespace RMTV_recorder
 {
     class CommonFunc
     {
+        private static Window _window = null;
+
+        public Window window
+        {
+            set
+            {
+                _window = value;
+            }
+        }
+
         public static bool GetStatusChangedFlag()
         {
             return Global.flagTaskComplete;
@@ -28,22 +38,6 @@ namespace RMTV_recorder
         public static void ClearStatusChangedFlag()
         {
             Global.flagTaskComplete = false;
-        }
-
-        public static void AddRecObj(RecObj recObj)
-        {
-            lock(Global._syncLock)
-            {
-                Global._groupRecObj.Add(recObj);
-            }
-        }
-
-        public static void RemoveRecObj(RecObj recObj)
-        {
-            lock (Global._syncLock)
-            {
-                Global._groupRecObj.Remove(recObj);
-            }
         }
 
         public static bool PrepareShutDown(Window window)
@@ -88,9 +82,10 @@ namespace RMTV_recorder
         public static string GetKeyFileStr()
         {
             string strKey = "";
-            if (File.Exists(Parameter._keyfile_Path))
+            string keyFile = CommonFunc.GetKeyfilePath();
+            if (File.Exists(keyFile))
             {
-                using (StreamReader reader = new StreamReader(Parameter._keyfile_Path))
+                using (StreamReader reader = new StreamReader(keyFile))
                 {
                     strKey = reader.ReadLine() ?? "";
                 }
@@ -126,12 +121,20 @@ namespace RMTV_recorder
         {
             DateTime dateNow = GetZoneTime(timezoneId);
             DateTime dateReset = dateNow.AddHours(dateNow.Hour * (-1))
-                                               .AddMinutes(dateNow.Minute * (-1))
-                                               .AddSeconds(dateNow.Second * (-1))
-                                               .AddMilliseconds(dateNow.Millisecond * (-1));
+                                        .AddMinutes(dateNow.Minute * (-1))
+                                        .AddSeconds(dateNow.Second * (-1))
+                                        .AddMilliseconds(dateNow.Millisecond * (-1));
 
-            DateTime date = dateReset.AddHours(hour).AddMinutes(minute);
-            return date;
+            DateTime dateSet = dateReset.AddHours(hour).AddMinutes(minute);
+            return dateSet;
+        }
+
+        public static DateTime SetZoneTime(string timezoneId, DateTime date, int hour, int minute)
+        {
+            DateTime dateSet = date.AddHours(hour)
+                                   .AddMinutes(minute);
+
+            return dateSet;
         }
 
         public static string GetTimeZoneHour(string timezoneId)
@@ -165,11 +168,54 @@ namespace RMTV_recorder
             return timeZoneName;
         }
 
-        public static void UpdateM3U8()
+        public static void RunWithProcessingUC(OperationHandler operation, string message)
+        {
+            winCustom wincustom = new winCustom();
+            Processing_UC processing_uc = new Processing_UC();
+
+            processing_uc.window = wincustom;
+            processing_uc.Operation_delegate = operation;
+            processing_uc.Message = message;
+            processing_uc.ShowProgressBar = true;
+            wincustom.winContent = processing_uc;
+            wincustom.Topmost = true;
+            wincustom.Owner = _window;
+            wincustom.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+            wincustom.WindowStyle = WindowStyle.None;
+            wincustom.AllowsTransparency = true;
+            wincustom.ShowInTaskbar = false;
+            wincustom.ShowDialog();
+        }
+
+        public static bool RunWithProcessingUC(OperationHandlerWithResult operation, string message)
+        {
+            winCustom wincustom = new winCustom();
+            Processing_UC processing_uc = new Processing_UC();
+
+            processing_uc.window = wincustom;
+            processing_uc.Operation_delegate_with_result = operation;
+            processing_uc.Message = message;
+            processing_uc.ShowProgressBar = true;
+            wincustom.winContent = processing_uc;
+            wincustom.Topmost = true;
+            wincustom.Owner = _window;
+            wincustom.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+            wincustom.WindowStyle = WindowStyle.None;
+            wincustom.AllowsTransparency = true;
+            wincustom.ShowInTaskbar = false;
+            return (wincustom.ShowDialog() == true);
+        }
+
+        public static void InitialM3U8()
+        {
+            M3U8 m = new M3U8();
+            m.InitialM3U8List();
+        }
+
+        public static bool DownloadM3U8()
         {
             DownloadFile d = new DownloadFile();
-            d.DownloadESM3U8();
-            d.DownloadENM3U8();
+            return d.DownloadESM3U8() & d.DownloadENM3U8();
         }
 
         public static TimeSpan GetVideoDuration(string filepath)
@@ -215,17 +261,71 @@ namespace RMTV_recorder
 
         public static bool IsUrlValid(string url)
         {
+            bool pageExists = false;
             try
             {
-                WebRequest webRequest = WebRequest.Create(url);
-                WebResponse webResponse = webRequest.GetResponse();
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+                request.Method = WebRequestMethods.Http.Head;
+                HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+                pageExists = response.StatusCode == HttpStatusCode.OK;
             }
-            catch
+            catch (Exception ex)
             {
-                return false;
+                Debug.WriteLine(ex.ToString());
             }
 
-            return true;
+            return pageExists;
+        }
+
+        public static bool IsFileValid(string url)
+        {
+            bool ret = false;
+            try
+            {
+                HttpWebRequest webRequest = (HttpWebRequest)HttpWebRequest.Create(url);
+                WebHeaderCollection headers = webRequest.GetResponse().Headers;
+                ret = true;
+            }
+            catch (WebException ex)
+            {
+                Debug.WriteLine(ex.ToString());
+            }
+
+            return ret;
+        }
+
+        public static bool CheckChannelLinkValid(string channel, string channellink)
+        {
+            if (channel.Equals(Parameter.Channel_Spanish))
+            {
+                foreach (M3U8Obj obj in Global._rmtv_link_es)
+                {
+                    if (IsFileValid(obj.Path))
+                    {
+                        return true;
+                    }
+                }
+            }
+            else if (channel.Equals(Parameter.Channel_English))
+            {
+                channellink = Parameter._m3u8_en_Path;
+                foreach (M3U8Obj obj in Global._rmtv_link_en)
+                {
+                    if (IsFileValid(obj.Path))
+                    {
+                        return true;
+                    }
+                }
+            }
+            else
+            {
+                if (IsFileValid(channellink))
+                {
+                    return true;
+                }
+            }
+        
+            return false;
         }
 
         public static void ToastMessage(Label label, string message, int msg_duration)
@@ -246,15 +346,32 @@ namespace RMTV_recorder
             storyboard.Begin(label);
         }
 
+        public static string GetKeyfilePath()
+        {
+            return Path.Combine(Parameter._resourceFullPath, Base64Decode(Parameter._keyString));
+        }
+
+        public static string Base64Encode(string str)
+        {
+            byte[] data = Encoding.UTF8.GetBytes(str);
+            return Convert.ToBase64String(data);
+        }
+
+        public static string Base64Decode(string str)
+        {
+            byte[] data = Convert.FromBase64String(str);
+            return Encoding.UTF8.GetString(data);
+        }
+
         public static void test()
         {
             //MessageBox.Show("Test!");
-            Thread.Sleep(5000);
-            Debug.WriteLine("Hello");
-            Debug.WriteLine("Hello");
-            Debug.WriteLine("Hello");
-            Debug.WriteLine("Hello");
-            Debug.WriteLine("Hello");
+            //Thread.Sleep(5000);
+            //Debug.WriteLine("Hello");
+            //Debug.WriteLine("Hello");
+            //Debug.WriteLine("Hello");
+            //Debug.WriteLine("Hello");
+            //Debug.WriteLine("Hello");
         }
     }
 }

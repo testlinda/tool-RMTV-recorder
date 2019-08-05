@@ -226,38 +226,35 @@
                     </StackPanel>
                 </Grid>
                 <Grid Grid.Row="1" Margin="0,10">
-                    <DataGrid Name="dgRecObj" Height="220"
+                    <DataGrid Name="dgRecObj" Height="220" 
+                                              RowHeight="20" RowHeaderWidth="25"
                                               IsReadOnly="True"
                                               AutoGenerateColumns="False"
                                               CanUserResizeColumns="False" CanUserResizeRows="False"
-                                              CanUserSortColumns="False" CanUserReorderColumns="False"
-                                              CanUserAddRows="False" CanUserDeleteRows="False">
+                                              CanUserReorderColumns="False"
+                                              CanUserAddRows="False" CanUserDeleteRows="False"
+                                              HeadersVisibility="All"
+                                              LoadingRow="DataGrid_LoadingRow"
+                                              local:DataGridBehavior.DisplayRowNumber="True">
                         <DataGrid.Columns>
-
-                            <DataGridTextColumn Header="#" Binding="{Binding Index}" Width="10">
-                                <DataGridTextColumn.CellStyle>
-                                    <Style TargetType="DataGridCell">
-                                        <Setter Property="ToolTip" Value="{Binding Index}" />
-                                    </Style>
-                                </DataGridTextColumn.CellStyle>
-                            </DataGridTextColumn>
                             <DataGridTextColumn  Header="Channel" Binding="{Binding Channel}" Width="Auto">
                                 <DataGridTextColumn.CellStyle>
-                                    <Style TargetType="DataGridCell">
+                                    <Style TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}">
                                         <Setter Property="ToolTip" Value="{Binding ChannelLink}" />
                                     </Style>
                                 </DataGridTextColumn.CellStyle>
                             </DataGridTextColumn>
+                            <DataGridTextColumn Header="Date" Binding="{Binding StartTime,StringFormat='MM-dd'}" Width="50"/>
                             <DataGridTextColumn Header="Start Time" Binding="{Binding StartTime,StringFormat='HH:mm:ss'}" Width="70">
                                 <DataGridTextColumn.CellStyle>
-                                    <Style TargetType="DataGridCell">
+                                    <Style TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}">
                                         <Setter Property="ToolTip" Value="{Binding StrStartTime}" />
                                     </Style>
                                 </DataGridTextColumn.CellStyle>
                             </DataGridTextColumn>
                             <DataGridTextColumn Header="End Time" Binding="{Binding EndTime, StringFormat='HH:mm:ss'}" Width="70">
                                 <DataGridTextColumn.CellStyle>
-                                    <Style TargetType="DataGridCell">
+                                    <Style TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}">
                                         <Setter Property="ToolTip" Value="{Binding StrEndTime}" />
                                     </Style>
                                 </DataGridTextColumn.CellStyle>
@@ -267,7 +264,9 @@
                             <DataGridTemplateColumn Header="Log" Width="30">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Button Click="btn_openlog_s_Click">
+                                        <Button Click="btn_openlog_s_Click"
+                                                Height="{Binding RelativeSource={RelativeSource AncestorType=DataGridCell}, Path=ActualHeight}"
+                                                Width="{Binding RelativeSource={RelativeSource AncestorType=DataGridCell}, Path=ActualWidth}">
                                             <StackPanel>
                                                 <Image Source="/Resource/log_small.png" Width="10" Height="10"/>
                                             </StackPanel>

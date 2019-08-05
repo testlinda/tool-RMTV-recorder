@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
@@ -12,28 +13,15 @@ namespace RMTV_recorder
     {
         public enum RecordStatus
         {
-            Scheduled,
+            Scheduled = 0,
             //
-            Recording,
-            Stopping,
+            Recording = 1,
+            Stopping = 2,
+            WaitForRetry = 3,
             //
-            Completed,
-            EndEarlier,
-            Failed
-        }
-
-        private int _index;
-        public int Index
-        {
-            get
-            {
-                return _index;
-            }
-            set
-            {
-                _index = value;
-                NotifyPropertyChanged();
-            }
+            Completed = 4,
+            EndEarlier = 5,
+            Failed = 6,
         }
 
         private RecordStatus _status;
@@ -51,15 +39,41 @@ namespace RMTV_recorder
             }
         }
 
+        private DateTime _starttime;
+        public DateTime StartTime
+        {
+            get
+            {
+                return _starttime;
+            }
+            set
+            {
+                _starttime = value;
+                NotifyPropertyChanged();
+            }
+        }
+
+        private string _strStartTime;
+        public string StrStartTime
+        {
+            get
+            {
+                return _strStartTime;
+            }
+            set
+            {
+                _strStartTime = value;
+                NotifyPropertyChanged();
+            }
+        }
+
         public string Channel { get; set; }
         public string ChannelLink { get; set; }
-        public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }
         public int Duration { get; set; }
         public string Log { get; set; }
         public FFmpeg Ffmpeg { get; set; }
         public ScheduledTask Task { get; set; }
-        public string StrStartTime { get; set; }
         public string StrEndTime { get; set; }
         public string TimeZoneId { get; set; }
         public int RetryTimes { get; set; }
@@ -73,17 +87,26 @@ namespace RMTV_recorder
 
         public RecObj()
         {
-            
+
         }
 
         public void Initialization()
         {
             Ffmpeg = new FFmpeg();
-            Task = new ScheduledTask(CommonFunc.ConvertDateTime2Local(TimeZoneId, StartTime), RecordVideo);
-            Task.ArrangeTask();
             StrStartTime = GetStrDateTime(StartTime);
             StrEndTime = GetStrDateTime(EndTime);
             IsStoppedManually = false;
+
+            if (Status != RecordStatus.WaitForRetry)
+            {
+                Task = new ScheduledTask(CommonFunc.ConvertDateTime2Local(TimeZoneId, StartTime), Record);
+            }
+            else
+            {
+                Task = new ScheduledTask(CommonFunc.ConvertDateTime2Local(TimeZoneId, StartTime), RetryRecord);
+            }
+
+            Task.ArrangeTask();
         }
 
         public string GetStrDateTime(DateTime datetime)
@@ -91,7 +114,7 @@ namespace RMTV_recorder
             string strFormat = "yyyy/MM/dd a\\t HH:mm:ss";
             string strTime = String.Concat("(",
                                            CommonFunc.GetTimeZoneHour(TimeZoneId),
-                                            "):\t", 
+                                            "):\t",
                                            datetime.ToString(strFormat),
                                            "\r\n",
                                            "Local:\t",
@@ -99,7 +122,7 @@ namespace RMTV_recorder
             return strTime;
         }
 
-        private void RecordVideo()
+        private void Record()
         {
             if (Ffmpeg == null || Task == null)
             {
@@ -109,10 +132,14 @@ namespace RMTV_recorder
             Status = RecordStatus.Recording;
 
             Ffmpeg.StartRecord(Channel, ChannelLink, Duration * 60, RetryTimes);
+            FinishRecord();
+        }
 
+        private void FinishRecord()
+        {
             if (!IsStoppedManually && CheckRecordStoppedEarlier())
             {
-                RetryRecordVideo();
+                AddRetryRecord();
                 Status = (Ffmpeg.CheckFIleExist()) ? RecordStatus.EndEarlier : RecordStatus.Failed;
             }
             else
@@ -120,6 +147,8 @@ namespace RMTV_recorder
                 Status = (Ffmpeg.CheckFIleExist()) ? RecordStatus.Completed : RecordStatus.Failed;
             }
 
+            Global._scheduledRecObj.AddInactiveCount();
+            Clean();
         }
 
         private bool CheckRecordStoppedEarlier()
@@ -131,36 +160,45 @@ namespace RMTV_recorder
             return false;
         }
 
-        private void RetryRecordVideo()
+        private void AddRetryRecord()
         {
             if (RetryTimes >= Parameter.retry_times_limit)
                 return;
 
             DateTime starttime = GetRetryStartTime();
-            if (starttime >= EndTime)
-                return;
-
             RecObj recObj = new RecObj
             {
-                Index = GetIndex(),
                 Channel = Channel,
                 ChannelLink = ChannelLink,
                 StartTime = starttime,
                 EndTime = EndTime,
                 Duration = GetDuration(),
-                TimeZoneId = Global._timezoneId,
-                Status = RecObj.RecordStatus.Scheduled,
+                TimeZoneId = TimeZoneId,
+                Status = RecObj.RecordStatus.WaitForRetry,
                 Log = "",
                 RetryTimes = this.RetryTimes + 1,
             };
 
             recObj.Initialization();
-            CommonFunc.AddRecObj(recObj);
+            Global._scheduledRecObj.Add(recObj);
         }
 
-        private int GetIndex()
+        private void RetryRecord()
         {
-            return Global._groupRecObj.Count + 1;
+            if (!CommonFunc.CheckChannelLinkValid(Channel, ChannelLink))
+            {
+                Clean();
+                StartTime = GetRetryStartTime();
+                StrStartTime = GetStrDateTime(StartTime);
+                Task = new ScheduledTask(CommonFunc.ConvertDateTime2Local(TimeZoneId, StartTime), RetryRecord);
+                Task.ArrangeTask();
+                return;
+            }
+
+            Status = RecordStatus.Recording;
+
+            Ffmpeg.StartRecord(Channel, ChannelLink, Duration * 60, RetryTimes);
+            FinishRecord();
         }
 
         private DateTime GetRetryStartTime()
@@ -177,6 +215,65 @@ namespace RMTV_recorder
             int duration = (int)differenceInMinutes;
 
             return duration;
+        }
+
+        public void Clean()
+        {
+            Ffmpeg.Dispose();
+            Task.Dispose();
+        }
+
+    }
+
+    public class ScheduledRecObj
+    {
+        public int InactiveCount { get; set; }
+        public ObservableCollection<RecObj> RecObjs;
+        public object SyncLock { get; set; }
+        public int Count
+        {
+            get
+            {
+                return RecObjs.Count;
+            }
+        }
+
+        public ScheduledRecObj()
+        {
+            InactiveCount = 0;
+            RecObjs = new ObservableCollection<RecObj>();
+            SyncLock = new object();
+            System.Windows.Data.BindingOperations.EnableCollectionSynchronization(RecObjs, SyncLock);
+        }
+
+        public void Add(RecObj obj)
+        {
+            lock (SyncLock)
+            {
+                RecObjs.Add(obj);
+            }
+                
+        }
+
+        public void Remove(RecObj obj)
+        {
+            lock (SyncLock)
+            {
+                if (obj.Status >= RecObj.RecordStatus.Completed)
+                    InactiveCount--;
+
+                obj.Ffmpeg = null;
+                obj.Task = null;
+                RecObjs.Remove(obj);
+            }    
+        }
+
+        public void AddInactiveCount()
+        {
+            lock(SyncLock)
+            {
+                InactiveCount++;
+            }
         }
 
     }

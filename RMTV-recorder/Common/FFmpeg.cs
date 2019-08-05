@@ -91,7 +91,9 @@ namespace RMTV_recorder
         public void KillProcess()
         {
             if (_process != null && !_process.HasExited)
+            {
                 _process.Kill();
+            }
         }
 
         public bool CheckAlive()
@@ -121,7 +123,7 @@ namespace RMTV_recorder
                     if (!GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0))
                         return false;
 
-                    System.Threading.Thread.Sleep(200);
+                    System.Threading.Thread.Sleep(300);
                     if (_isManaul)
                         _process.WaitForExit();
                 }
@@ -165,10 +167,26 @@ namespace RMTV_recorder
             if (channel.Equals(Parameter.Channel_Spanish))
             {
                 channellink = Parameter._m3u8_es_Path;
+                foreach (M3U8Obj obj in Global._rmtv_link_es)
+                {
+                    if (CommonFunc.IsFileValid(obj.Path))
+                    {
+                        channellink = obj.Path;
+                        break;
+                    }
+                }
             }
             else if (channel.Equals(Parameter.Channel_English))
             {
                 channellink = Parameter._m3u8_en_Path;
+                foreach (M3U8Obj obj in Global._rmtv_link_en)
+                {
+                    if (CommonFunc.IsFileValid(obj.Path))
+                    {
+                        channellink = obj.Path;
+                        break;
+                    }
+                }
             }
         }
 
@@ -191,5 +209,14 @@ namespace RMTV_recorder
             return string.Join("\n", _log.ToArray());
         }
 
+        public void Dispose()
+        {
+            if (_process != null)
+            {
+                _process.Close();
+                _process.Dispose();
+                _process = null;
+            }
+        }
     }
 }
