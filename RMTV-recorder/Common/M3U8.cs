@@ -31,10 +31,10 @@ namespace RMTV_recorder
         public bool InitialM3U8List()
         {
             bool ret = true;
-            ret &= ParseM3U8(Parameter._m3u8_es_Path, ref Global._rmtv_link_es);
-            ret &= ParseM3U8(Parameter._m3u8_en_Path, ref Global._rmtv_link_en);
-            SortList(ref Global._rmtv_link_es);
-            SortList(ref Global._rmtv_link_en);
+            ret &= ParseM3U8(Parameter._m3u8_es_Path, ref GlobalVar._rmtv_link_es);
+            ret &= ParseM3U8(Parameter._m3u8_en_Path, ref GlobalVar._rmtv_link_en);
+            SortList(ref GlobalVar._rmtv_link_es);
+            SortList(ref GlobalVar._rmtv_link_en);
 
             return ret;
         }

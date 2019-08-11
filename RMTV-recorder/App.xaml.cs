@@ -21,7 +21,7 @@ namespace RMTV_recorder
         {
             CommonFunc.IntialUniqleString();
 
-            if (SingleInstance<App>.InitializeAsFirstInstance(Global._uniqueStr))
+            if (SingleInstance<App>.InitializeAsFirstInstance(GlobalVar._uniqueStr))
             {
                 var application = new App();
                 application.InitializeComponent();

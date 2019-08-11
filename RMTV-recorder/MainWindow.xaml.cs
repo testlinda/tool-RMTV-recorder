@@ -26,7 +26,7 @@ namespace RMTV_recorder
         private bool load_success = false;
 
         private BackgroundWorker backgroundWorker_manual = null;
-        private FFmpeg ffmpeg_manual = null;
+        private FFmpeg rec_manual = null;
         private Clock clock = null;
         private ClockTimer clocktimer_manual = null;
         private string _selectedChannel_manual = Parameter.Channel_Spanish ;
@@ -67,11 +67,11 @@ namespace RMTV_recorder
             InitialRecording();
             InitialNotifyIcon();
 
-            Global._scheduledRecObj = new ScheduledRecObj();
+            GlobalVar._RecObjs = new RecObjCollection();
             //Global._scheduledRecObj.RecObjs = new ObservableCollection<RecObj>();
             //Global._groupRecObj = new ObservableCollection<RecObj>();
             //BindingOperations.EnableCollectionSynchronization(Global._groupRecObj, Global._syncLock);
-            dgRecObj.ItemsSource = Global._scheduledRecObj.RecObjs;
+            dgRecObj.ItemsSource = GlobalVar._RecObjs.RecObjs;
             Closing += OnClosing;
 
             return true;
@@ -101,8 +101,8 @@ namespace RMTV_recorder
                 CreateDefaultIniFile();
             }
 
-            Global._timezoneId = IniHelper.ReadValue(Parameter._iniSectionSetting, Parameter._iniKeyTimeZoneId, Parameter._setting_Path);
-            Global._debugmode = (IniHelper.ReadValue(Parameter._iniSectionSetting, Parameter._iniKeyDebugMode, Parameter._setting_Path).Equals("Y", StringComparison.OrdinalIgnoreCase));
+            GlobalVar._timezoneId = IniHelper.ReadValue(Parameter._iniSectionSetting, Parameter._iniKeyTimeZoneId, Parameter._setting_Path);
+            GlobalVar._debugmode = (IniHelper.ReadValue(Parameter._iniSectionSetting, Parameter._iniKeyDebugMode, Parameter._setting_Path).Equals("Y", StringComparison.OrdinalIgnoreCase));
         }
 
         private void InitialCommonFunc()
@@ -196,15 +196,15 @@ namespace RMTV_recorder
 
         private void RefreshDebugMode()
         {
-            btn_debug.Visibility = (Global._debugmode) ? Visibility.Visible : Visibility.Collapsed;
-            IniHelper.WriteValue(Parameter._iniSectionSetting, Parameter._iniKeyDebugMode, Global._debugmode ? "Y" : "N", Parameter._setting_Path);
+            btn_debug.Visibility = (GlobalVar._debugmode) ? Visibility.Visible : Visibility.Collapsed;
+            IniHelper.WriteValue(Parameter._iniSectionSetting, Parameter._iniKeyDebugMode, GlobalVar._debugmode ? "Y" : "N", Parameter._setting_Path);
         }
 
         private void RunClock()
         {
             UpdateClock();
 
-            clock = new Clock(this, label_clock, Global._timezoneId);
+            clock = new Clock(this, label_clock, GlobalVar._timezoneId);
             clock.StartClock();
         }
 
@@ -234,12 +234,12 @@ namespace RMTV_recorder
 
         private void InitialNotifyIcon()
         {
-            Global._notifyIcon = new System.Windows.Forms.NotifyIcon();
-            Global._notifyIcon.Icon = RMTV_recorder.Resource.icon;
-            Global._notifyIcon.BalloonTipTitle = Parameter._windowTitle;
-            Global._notifyIcon.BalloonTipText = "The app has been minimised. Click the tray icon to show.";
-            Global._notifyIcon.Text = Parameter._windowTitle;
-            Global._notifyIcon.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(NotifyIcon_MouseDoubleClick);
+            GlobalVar._notifyIcon = new System.Windows.Forms.NotifyIcon();
+            GlobalVar._notifyIcon.Icon = RMTV_recorder.Resource.icon;
+            GlobalVar._notifyIcon.BalloonTipTitle = Parameter._windowTitle;
+            GlobalVar._notifyIcon.BalloonTipText = "The app has been minimised. Click the tray icon to show.";
+            GlobalVar._notifyIcon.Text = Parameter._windowTitle;
+            GlobalVar._notifyIcon.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(NotifyIcon_MouseDoubleClick);
         }
 
         void NotifyIcon_MouseDoubleClick(object sender, System.Windows.Forms.MouseEventArgs e)
@@ -252,12 +252,12 @@ namespace RMTV_recorder
             if (this.WindowState == WindowState.Minimized)
             {
                 this.ShowInTaskbar = false;
-                Global._notifyIcon.ShowBalloonTip(2000);
-                Global._notifyIcon.Visible = true;
+                GlobalVar._notifyIcon.ShowBalloonTip(2000);
+                GlobalVar._notifyIcon.Visible = true;
             }
             else if (this.WindowState == WindowState.Normal)
             {
-                Global._notifyIcon.Visible = false;
+                GlobalVar._notifyIcon.Visible = false;
                 this.ShowInTaskbar = true;
             }
         }
@@ -286,7 +286,7 @@ namespace RMTV_recorder
                     };
                     label_loading.Visibility = Visibility.Hidden;
                     btn_record.IsEnabled = true;
-                    btn_openlog.Visibility = Visibility.Visible;
+                    //btn_openlog.Visibility = Visibility.Visible;
                     label_status.Content = "Stopped";
                     clocktimer_manual.StopTimer();
                     cb_lang.IsEnabled = true;
@@ -304,7 +304,7 @@ namespace RMTV_recorder
                     };
                     label_loading.Visibility = Visibility.Visible;
                     btn_record.IsEnabled = false;
-                    btn_openlog.Visibility = Visibility.Hidden;
+                    //btn_openlog.Visibility = Visibility.Hidden;
                     label_status.Content = "Starting...";
                     label_starttime.Content = DateTime.Now.ToString("HH:mm:ss");
                     cb_lang.IsEnabled = false;
@@ -322,7 +322,7 @@ namespace RMTV_recorder
                     };
                     label_loading.Visibility = Visibility.Hidden;
                     btn_record.IsEnabled = true;
-                    btn_openlog.Visibility = Visibility.Hidden;
+                    //btn_openlog.Visibility = Visibility.Hidden;
                     label_status.Content = "Recording...";
                     cb_lang.IsEnabled = false;
                     break;
@@ -339,7 +339,7 @@ namespace RMTV_recorder
                     };
                     label_loading.Visibility = Visibility.Visible;
                     btn_record.IsEnabled = false;
-                    btn_openlog.Visibility = Visibility.Hidden;
+                    //btn_openlog.Visibility = Visibility.Hidden;
                     label_status.Content = "Stop Recording...";
                     cb_lang.IsEnabled = false;
                     break;
@@ -355,7 +355,7 @@ namespace RMTV_recorder
                     };
                     label_loading.Visibility = Visibility.Hidden;
                     btn_record.IsEnabled = true;
-                    btn_openlog.Visibility = Visibility.Visible;
+                    //btn_openlog.Visibility = Visibility.Visible;
                     label_status.Content = "Stopped (Failed)";
                     clocktimer_manual.StopTimer();
                     cb_lang.IsEnabled = true;
@@ -433,16 +433,16 @@ namespace RMTV_recorder
         
         private void RecordVideo()
         {
-            ffmpeg_manual = new FFmpeg();
-            ffmpeg_manual.StartRecord(_selectedChannel_manual);
+            rec_manual = new FFmpeg();
+            rec_manual.StartRecord(_selectedChannel_manual);
         }
 
         private void StopRecordVideo()
         {
-            if (ffmpeg_manual!= null)
+            if (rec_manual!= null)
             {
-                ffmpeg_manual.StopRecord();
-                ffmpeg_manual.Dispose();
+                rec_manual.StopRecord();
+                rec_manual.Dispose();
             }
         }
 
@@ -462,7 +462,7 @@ namespace RMTV_recorder
 
         private void OnCheckAliveEvent(object sender, EventArgs e)
         {
-            if (!ffmpeg_manual.CheckAlive())
+            if (!rec_manual.IsAlive())
             {
                 StopCheckManualRecordAlive();
                 this.Dispatcher.Invoke(DispatcherPriority.Normal, new OperationHandler(NotifyFailedRecording));
@@ -488,7 +488,7 @@ namespace RMTV_recorder
             winCustom wincustom = new winCustom();
             Log_UC log_uc = new Log_UC();
 
-            log_uc.Log = (ffmpeg_manual == null) ? "" : ffmpeg_manual.GetLog();
+            log_uc.Log = (rec_manual == null) ? "" : rec_manual.GetLog();
             log_uc.CloseDialog += new ucCustom.CloseDialogHandler(UserControl_CloseDialog);
             wincustom.winContent = log_uc;
             wincustom.Title = "Log";
@@ -513,12 +513,12 @@ namespace RMTV_recorder
                 }
                 else
                 {
-                    if (ffmpeg_manual != null) // manual one
-                        ffmpeg_manual.KillProcess();
+                    if (rec_manual != null) // manual one
+                        rec_manual.KillProcess();
 
-                    if (Global._scheduledRecObj.Count > 0) // scheduled ones
+                    if (GlobalVar._RecObjs.Count > 0) // scheduled ones
                     {
-                        foreach (RecObj obj in Global._scheduledRecObj.RecObjs)
+                        foreach (RecObj obj in GlobalVar._RecObjs.RecObjs)
                         {
                             if (obj.Ffmpeg != null)
                                 obj.Ffmpeg.KillProcess();
@@ -537,10 +537,10 @@ namespace RMTV_recorder
 
         private void ReleaseNotifyIcon()
         {
-            if (Global._notifyIcon != null )
+            if (GlobalVar._notifyIcon != null )
             {
-                Global._notifyIcon.Dispose();
-                Global._notifyIcon = null;
+                GlobalVar._notifyIcon.Dispose();
+                GlobalVar._notifyIcon = null;
             }
         }
 
@@ -585,7 +585,7 @@ namespace RMTV_recorder
             if (wincustom.ShowDialog() == true)
             {
                 RefreshSetting();
-                IniHelper.WriteValue(Parameter._iniSectionSetting, Parameter._iniKeyTimeZoneId, Global._timezoneId, Parameter._setting_Path);
+                IniHelper.WriteValue(Parameter._iniSectionSetting, Parameter._iniKeyTimeZoneId, GlobalVar._timezoneId, Parameter._setting_Path);
             }
             
         }
@@ -593,13 +593,13 @@ namespace RMTV_recorder
         private void RefreshSetting()
         {
             UpdateClock();
-            clock.UpdateTimeZone(Global._timezoneId);
+            clock.UpdateTimeZone(GlobalVar._timezoneId);
         }
 
         private void UpdateClock()
         {
-            label_timezone.Content = "UTC " + CommonFunc.GetTimeZoneHour(Global._timezoneId);
-            grid_clock.ToolTip = CommonFunc.GetTimeZoneDisplayName(Global._timezoneId);
+            label_timezone.Content = "UTC " + CommonFunc.GetTimeZoneHour(GlobalVar._timezoneId);
+            grid_clock.ToolTip = CommonFunc.GetTimeZoneDisplayName(GlobalVar._timezoneId);
         }
 
         static void UserControl_CloseDialog(object sender, bool bApply, EventArgs e)
@@ -647,13 +647,11 @@ namespace RMTV_recorder
                         recObj.Status == RecObj.RecordStatus.Stopping)
                         continue;
 
-                    recObj.Task.CancelTask();
-                    recObj.Clean();
-                    Global._scheduledRecObj.Remove(recObj);
+                    GlobalVar._RecObjs.Remove(recObj);
                 };
             }
 
-            if (Global._scheduledRecObj.Count == 0)
+            if (GlobalVar._RecObjs.Count == 0)
             {
                 chechbox_isshutdown.Visibility = Visibility.Hidden;
                 StopRefreshDataGrid();
@@ -670,9 +668,7 @@ namespace RMTV_recorder
                     RecObj recObj = (RecObj)dgRecObj.SelectedItems[i];
                     if (recObj.Status == RecObj.RecordStatus.Recording)
                     {
-                        recObj.IsStoppedManually = true;
-                        recObj.Status = RecObj.RecordStatus.Stopping;
-                        recObj.Ffmpeg.StopRecord();
+                        recObj.StopRecord();
                     }
                 };
             }
@@ -739,13 +735,13 @@ namespace RMTV_recorder
 
         private bool IsAllSceduleCompleted()
         {
-            if (Global._scheduledRecObj.Count == 0)
+            if (GlobalVar._RecObjs.Count == 0)
             {
                 return true;
             }
             else
             {
-                if (Global._scheduledRecObj.Count == Global._scheduledRecObj.InactiveCount)
+                if (GlobalVar._RecObjs.Count == GlobalVar._RecObjs.InactiveCount)
                     return true;
             }
 
@@ -759,9 +755,7 @@ namespace RMTV_recorder
                 for (int i = 0; i < dgRecObj.SelectedItems.Count; i++)
                 {
                     RecObj recObj = (RecObj)dgRecObj.SelectedItems[i];
-                    recObj.IsStoppedManually = true;
-                    recObj.Status = RecObj.RecordStatus.Stopping;
-                    recObj.Ffmpeg.StopRecord();
+                    recObj.StopRecord();
                 };
             }
         }
@@ -778,7 +772,7 @@ namespace RMTV_recorder
             winCustom wincustom = new winCustom();
             Log_UC log_uc = new Log_UC();
 
-            log_uc.Log = (obj.Ffmpeg == null) ? "" : obj.Ffmpeg.GetLog();
+            log_uc.Log = obj.GetLog();
             log_uc.CloseDialog += new ucCustom.CloseDialogHandler(UserControl_CloseDialog);
             wincustom.winContent = log_uc;
             wincustom.Title = "Log";

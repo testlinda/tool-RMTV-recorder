@@ -37,7 +37,7 @@ namespace RMTV_recorder
             label_author.Content = GetCopyright();
 
             //debug info
-            label_struniqle.Content = Global._uniqueStr;
+            label_struniqle.Content = GlobalVar._uniqueStr;
             RefreshDebugInfoVisibility();
         }
 
@@ -73,7 +73,7 @@ namespace RMTV_recorder
 
         private void RefreshDebugInfoVisibility()
         {
-            sp_debuginfo.Visibility = (Global._debugmode) ? Visibility.Visible : Visibility.Hidden;
+            sp_debuginfo.Visibility = (GlobalVar._debugmode) ? Visibility.Visible : Visibility.Hidden;
         }
 
         private void page_PreviewMouseDown(object sender, MouseButtonEventArgs e)
@@ -82,10 +82,10 @@ namespace RMTV_recorder
 
             if (click_count == Parameter.debug_on_click)
             {
-                Global._debugmode = !Global._debugmode;
+                GlobalVar._debugmode = !GlobalVar._debugmode;
                 RefreshDebugInfoVisibility();
                 CommonFunc.ToastMessage(label_message, 
-                                        String.Format("Debug mode is {0}!", Global._debugmode ? "ON" : "OFF"),
+                                        String.Format("Debug mode is {0}!", GlobalVar._debugmode ? "ON" : "OFF"),
                                         2);
                 click_count = 0;
             }

@@ -36,6 +36,8 @@ namespace RMTV_recorder
                 _status = value;
                 NotifyPropertyChanged();
                 CommonFunc.RaiseStatusChangedFlag();
+                if (_status >= RecordStatus.Completed)
+                    GlobalVar._RecObjs.AddInactiveCount();
             }
         }
 
@@ -67,17 +69,31 @@ namespace RMTV_recorder
             }
         }
 
+        private int _duration;
+        public int Duration
+        {
+            get
+            {
+                return _duration;
+            }
+            set
+            {
+                _duration = value;
+                NotifyPropertyChanged();
+            }
+        }
+
         public string Channel { get; set; }
         public string ChannelLink { get; set; }
         public DateTime EndTime { get; set; }
-        public int Duration { get; set; }
         public string Log { get; set; }
         public FFmpeg Ffmpeg { get; set; }
         public ScheduledTask Task { get; set; }
         public string StrEndTime { get; set; }
         public string TimeZoneId { get; set; }
         public int RetryTimes { get; set; }
-        public bool IsStoppedManually { get; set; }
+
+        private bool IsStoppedManually { get; set; }
 
         public event PropertyChangedEventHandler PropertyChanged;
         private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
@@ -87,29 +103,56 @@ namespace RMTV_recorder
 
         public RecObj()
         {
+            Debug.WriteLine("RecObj Created.");
 
+            Ffmpeg = new FFmpeg();
         }
 
         public void Initialization()
         {
-            Ffmpeg = new FFmpeg();
+            Debug.WriteLine("RecObj Initialed.");
+
             StrStartTime = GetStrDateTime(StartTime);
             StrEndTime = GetStrDateTime(EndTime);
-            IsStoppedManually = false;
-
-            if (Status != RecordStatus.WaitForRetry)
-            {
-                Task = new ScheduledTask(CommonFunc.ConvertDateTime2Local(TimeZoneId, StartTime), Record);
-            }
-            else
-            {
-                Task = new ScheduledTask(CommonFunc.ConvertDateTime2Local(TimeZoneId, StartTime), RetryRecord);
-            }
-
+            OperationHandler handler = (Status != RecordStatus.WaitForRetry) ? 
+                                       (OperationHandler)Record : (OperationHandler)RetryRecord;
+            Task = new ScheduledTask(CommonFunc.ConvertDateTime2Local(TimeZoneId, StartTime), handler);
             Task.ArrangeTask();
         }
 
-        public string GetStrDateTime(DateTime datetime)
+        public void StopRecord()
+        {
+            IsStoppedManually = true;
+            Status = RecordStatus.Stopping;
+            Ffmpeg.StopRecord();
+        }
+
+        public string GetLog()
+        {
+            if (Ffmpeg != null)
+            {
+                Log = Ffmpeg.GetLog();
+            }
+            return Log;
+        }
+
+        public void Dispose()
+        {
+            Debug.WriteLine("RecObj Dispose.");
+            if (Ffmpeg != null)
+            {
+                Ffmpeg.Dispose();
+                Ffmpeg = null;
+            }
+
+            if (Task != null)
+            {
+                Task.Dispose();
+                Task = null;
+            }
+        }
+
+        private string GetStrDateTime(DateTime datetime)
         {
             string strFormat = "yyyy/MM/dd a\\t HH:mm:ss";
             string strTime = String.Concat("(",
@@ -130,34 +173,32 @@ namespace RMTV_recorder
                 return;
             }
             Status = RecordStatus.Recording;
-
             Ffmpeg.StartRecord(Channel, ChannelLink, Duration * 60, RetryTimes);
-            FinishRecord();
+            Finish();
         }
 
-        private void FinishRecord()
+        private void Finish()
         {
-            if (!IsStoppedManually && CheckRecordStoppedEarlier())
+            if (!Ffmpeg.IsFIleExist())
             {
-                AddRetryRecord();
-                Status = (Ffmpeg.CheckFIleExist()) ? RecordStatus.EndEarlier : RecordStatus.Failed;
+                Status = RecordStatus.Failed;
             }
             else
             {
-                Status = (Ffmpeg.CheckFIleExist()) ? RecordStatus.Completed : RecordStatus.Failed;
+                DateTime currenttime = CommonFunc.GetZoneTime(TimeZoneId);
+                if (!IsStoppedManually && !IsNearTheEndTime(currenttime))
+                {
+                    AddRetryRecord();
+                    Status = RecordStatus.EndEarlier;
+                }
+                else
+                {
+                    Status = RecordStatus.Completed;
+                }
             }
 
-            Global._scheduledRecObj.AddInactiveCount();
-            Clean();
-        }
-
-        private bool CheckRecordStoppedEarlier()
-        {
-            if ((EndTime - CommonFunc.GetZoneTime(TimeZoneId)).TotalMinutes > Parameter.disconnection_diff_min)
-            {
-                return true;
-            }
-            return false;
+            GetLog();
+            Dispose();
         }
 
         private void AddRetryRecord()
@@ -166,13 +207,18 @@ namespace RMTV_recorder
                 return;
 
             DateTime starttime = GetRetryStartTime();
+            if (IsNearTheEndTime(starttime))
+            {
+                return;
+            }
+
             RecObj recObj = new RecObj
             {
                 Channel = Channel,
                 ChannelLink = ChannelLink,
                 StartTime = starttime,
                 EndTime = EndTime,
-                Duration = GetDuration(),
+                Duration = GetRetryDuration(starttime, EndTime),
                 TimeZoneId = TimeZoneId,
                 Status = RecObj.RecordStatus.WaitForRetry,
                 Log = "",
@@ -180,25 +226,47 @@ namespace RMTV_recorder
             };
 
             recObj.Initialization();
-            Global._scheduledRecObj.Add(recObj);
+            GlobalVar._RecObjs.Add(recObj);
         }
 
         private void RetryRecord()
         {
-            if (!CommonFunc.CheckChannelLinkValid(Channel, ChannelLink))
+            if (Ffmpeg == null || Task == null)
             {
-                Clean();
-                StartTime = GetRetryStartTime();
-                StrStartTime = GetStrDateTime(StartTime);
-                Task = new ScheduledTask(CommonFunc.ConvertDateTime2Local(TimeZoneId, StartTime), RetryRecord);
-                Task.ArrangeTask();
+                Debug.WriteLine("RecObj was not initialized!");
                 return;
             }
 
-            Status = RecordStatus.Recording;
+            if (CommonFunc.CheckChannelLinkValid(Channel, ChannelLink))
+            {
+                Status = RecordStatus.Recording;
+                Ffmpeg.StartRecord(Channel, ChannelLink, Duration * 60, RetryTimes);
+                Finish();
+            }
+            else
+            {
+                DateTime temp_starttime = GetRetryStartTime();
+                if (IsNearTheEndTime(temp_starttime))
+                {
+                    Status = RecordStatus.Failed;
+                }
+                else
+                {
+                    StartTime = temp_starttime;
+                    Duration = GetRetryDuration(StartTime, EndTime);
+                    Initialization();
+                }
+            }            
+        }
 
-            Ffmpeg.StartRecord(Channel, ChannelLink, Duration * 60, RetryTimes);
-            FinishRecord();
+        private bool IsNearTheEndTime(DateTime time)
+        {
+            DateTime endtime_with_diff = EndTime.AddMinutes((-1) * Parameter.disconnection_diff_min);
+            if (time > endtime_with_diff)
+            {
+                return true;
+            }
+            return false;
         }
 
         private DateTime GetRetryStartTime()
@@ -208,27 +276,21 @@ namespace RMTV_recorder
             return CommonFunc.GetZoneTime(TimeZoneId).AddSeconds(delay_sec);
         }
 
-        private int GetDuration()
+        private int GetRetryDuration(DateTime starttime, DateTime endtime)
         {
-            TimeSpan ts = EndTime - StartTime;
+            TimeSpan ts = endtime - starttime;
             double differenceInMinutes = ts.TotalMinutes;
             int duration = (int)differenceInMinutes;
 
             return duration;
         }
-
-        public void Clean()
-        {
-            Ffmpeg.Dispose();
-            Task.Dispose();
-        }
-
     }
 
-    public class ScheduledRecObj
-    {
-        public int InactiveCount { get; set; }
+    public class RecObjCollection
+    {        
         public ObservableCollection<RecObj> RecObjs;
+
+        public int InactiveCount { get; set; }
         public object SyncLock { get; set; }
         public int Count
         {
@@ -238,10 +300,10 @@ namespace RMTV_recorder
             }
         }
 
-        public ScheduledRecObj()
+        public RecObjCollection()
         {
-            InactiveCount = 0;
             RecObjs = new ObservableCollection<RecObj>();
+            InactiveCount = 0;
             SyncLock = new object();
             System.Windows.Data.BindingOperations.EnableCollectionSynchronization(RecObjs, SyncLock);
         }
@@ -252,7 +314,6 @@ namespace RMTV_recorder
             {
                 RecObjs.Add(obj);
             }
-                
         }
 
         public void Remove(RecObj obj)
@@ -262,9 +323,9 @@ namespace RMTV_recorder
                 if (obj.Status >= RecObj.RecordStatus.Completed)
                     InactiveCount--;
 
-                obj.Ffmpeg = null;
-                obj.Task = null;
                 RecObjs.Remove(obj);
+                obj.Dispose();
+                obj = null;
             }    
         }
 
@@ -275,6 +336,5 @@ namespace RMTV_recorder
                 InactiveCount++;
             }
         }
-
     }
 }

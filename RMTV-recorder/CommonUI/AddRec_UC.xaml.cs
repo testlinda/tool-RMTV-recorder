@@ -36,7 +36,7 @@ namespace RMTV_recorder
         {
             get
             {
-                return "(UTC " + CommonFunc.GetTimeZoneHour(Global._timezoneId) + ")";
+                return "(UTC " + CommonFunc.GetTimeZoneHour(GlobalVar._timezoneId) + ")";
             }
         }
 
@@ -44,7 +44,7 @@ namespace RMTV_recorder
         {
             get
             {
-                return CommonFunc.GetTimeZoneDisplayName(Global._timezoneId);
+                return CommonFunc.GetTimeZoneDisplayName(GlobalVar._timezoneId);
             }
         }
 
@@ -54,7 +54,7 @@ namespace RMTV_recorder
 
             InitailEndTime();
             
-            if (Global._timezoneId.Equals(Parameter._timezoneIdSpain))
+            if (GlobalVar._timezoneId.Equals(Parameter._timezoneIdSpain))
             {
                 rb_channel_spanish.IsChecked = true;
             }
@@ -68,8 +68,8 @@ namespace RMTV_recorder
 
         private void InitailEndTime()
         {
-            tb_endtime_hour.Text = CommonFunc.GetZoneTime(Global._timezoneId).AddHours(1).Hour.ToString("00");
-            tb_endtime_min.Text = CommonFunc.GetZoneTime(Global._timezoneId).Minute.ToString("00");
+            tb_endtime_hour.Text = CommonFunc.GetZoneTime(GlobalVar._timezoneId).AddHours(1).Hour.ToString("00");
+            tb_endtime_min.Text = CommonFunc.GetZoneTime(GlobalVar._timezoneId).Minute.ToString("00");
         }
 
         private void Button_Close_Click(object sender, RoutedEventArgs e)
@@ -79,7 +79,7 @@ namespace RMTV_recorder
 
         private void Button_Confirm_Click(object sender, RoutedEventArgs e)
         {
-            temp_currenttime = CommonFunc.GetZoneTime(Global._timezoneId);
+            temp_currenttime = CommonFunc.GetZoneTime(GlobalVar._timezoneId);
             temp_starttime = GetStartTime();
             temp_endtime = GetEndTime();
 
@@ -94,14 +94,14 @@ namespace RMTV_recorder
                         StartTime = temp_starttime.AddDays(i),
                         EndTime = temp_endtime,
                         Duration = GetDuration(),
-                        TimeZoneId = Global._timezoneId,
+                        TimeZoneId = GlobalVar._timezoneId,
                         Status = RecObj.RecordStatus.Scheduled,
                         Log = "",
                         RetryTimes = 0,
                     };
 
                     recObj.Initialization();
-                    Global._scheduledRecObj.Add(recObj);
+                    GlobalVar._RecObjs.Add(recObj);
                 }
 
                 base.OnCloseDialog(this, true, e);
@@ -332,7 +332,7 @@ namespace RMTV_recorder
             {
                 if (rb_startdate_today.IsChecked == true)
                 {
-                    date = CommonFunc.SetZoneTime(Global._timezoneId, Convert.ToInt32(tb_statrttime_hour.Text),
+                    date = CommonFunc.SetZoneTime(GlobalVar._timezoneId, Convert.ToInt32(tb_statrttime_hour.Text),
                                                   Convert.ToInt32(tb_statrttime_min.Text));
 
                     if (IsPreviousTime(date, temp_currenttime))
@@ -342,7 +342,7 @@ namespace RMTV_recorder
                 }
                 else
                 {
-                    date = CommonFunc.SetZoneTime(Global._timezoneId,
+                    date = CommonFunc.SetZoneTime(GlobalVar._timezoneId,
                                                   datepicker_startdate.SelectedDate.Value.Date,
                                                   Convert.ToInt32(tb_statrttime_hour.Text),
                                                   Convert.ToInt32(tb_statrttime_min.Text));
@@ -360,7 +360,7 @@ namespace RMTV_recorder
             {
                 if (rb_startdate_today.IsChecked == true)
                 {
-                    date = CommonFunc.SetZoneTime(Global._timezoneId, Convert.ToInt32(tb_endtime_hour.Text),
+                    date = CommonFunc.SetZoneTime(GlobalVar._timezoneId, Convert.ToInt32(tb_endtime_hour.Text),
                                                   Convert.ToInt32(tb_endtime_min.Text));
 
                     if (IsPreviousTime(date, temp_starttime))
@@ -370,7 +370,7 @@ namespace RMTV_recorder
                 }
                 else
                 {
-                    date = CommonFunc.SetZoneTime(Global._timezoneId,
+                    date = CommonFunc.SetZoneTime(GlobalVar._timezoneId,
                                                   datepicker_startdate.SelectedDate.Value.Date,
                                                   Convert.ToInt32(tb_endtime_hour.Text),
                                                   Convert.ToInt32(tb_endtime_min.Text));

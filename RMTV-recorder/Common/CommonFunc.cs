@@ -27,17 +27,17 @@ namespace RMTV_recorder
 
         public static bool GetStatusChangedFlag()
         {
-            return Global.flagTaskComplete;
+            return GlobalVar.flagTaskComplete;
         }
 
         public static void RaiseStatusChangedFlag()
         {
-            Global.flagTaskComplete = true;
+            GlobalVar.flagTaskComplete = true;
         }
 
         public static void ClearStatusChangedFlag()
         {
-            Global.flagTaskComplete = false;
+            GlobalVar.flagTaskComplete = false;
         }
 
         public static bool PrepareShutDown(Window window)
@@ -73,16 +73,16 @@ namespace RMTV_recorder
         public static void IntialUniqleString()
         {
 #if DEBUG
-            Global._uniqueStr += "debugtest";
+            GlobalVar._uniqueStr += "debugtest";
 #else
-            Global._uniqueStr += CommonFunc.GetKeyFileStr();
+            GlobalVar._uniqueStr += GetKeyFileStr();
 #endif
         }
 
         public static string GetKeyFileStr()
         {
             string strKey = "";
-            string keyFile = CommonFunc.GetKeyfilePath();
+            string keyFile = GetKeyfilePath();
             if (File.Exists(keyFile))
             {
                 using (StreamReader reader = new StreamReader(keyFile))
@@ -158,7 +158,7 @@ namespace RMTV_recorder
             string timeZoneName = "";
             try
             {
-                timeZoneName = TimeZoneInfo.FindSystemTimeZoneById(Global._timezoneId).DisplayName;
+                timeZoneName = TimeZoneInfo.FindSystemTimeZoneById(GlobalVar._timezoneId).DisplayName;
             }
             catch
             {
@@ -298,7 +298,7 @@ namespace RMTV_recorder
         {
             if (channel.Equals(Parameter.Channel_Spanish))
             {
-                foreach (M3U8Obj obj in Global._rmtv_link_es)
+                foreach (M3U8Obj obj in GlobalVar._rmtv_link_es)
                 {
                     if (IsFileValid(obj.Path))
                     {
@@ -309,7 +309,7 @@ namespace RMTV_recorder
             else if (channel.Equals(Parameter.Channel_English))
             {
                 channellink = Parameter._m3u8_en_Path;
-                foreach (M3U8Obj obj in Global._rmtv_link_en)
+                foreach (M3U8Obj obj in GlobalVar._rmtv_link_en)
                 {
                     if (IsFileValid(obj.Path))
                     {

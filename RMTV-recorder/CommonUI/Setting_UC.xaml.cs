@@ -31,13 +31,13 @@ namespace RMTV_recorder
         {
             ReadOnlyCollection<TimeZoneInfo> TimeZones = TimeZoneInfo.GetSystemTimeZones();
             cb_timezone.DataContext = TimeZones;
-            cb_timezone.SelectedItem = TimeZoneInfo.FindSystemTimeZoneById(Global._timezoneId);
+            cb_timezone.SelectedItem = TimeZoneInfo.FindSystemTimeZoneById(GlobalVar._timezoneId);
         }
 
         private void Button_OK_Click(object sender, RoutedEventArgs e)
         {
             TimeZoneInfo info = (TimeZoneInfo)cb_timezone.SelectedItem;
-            Global._timezoneId = info.Id;
+            GlobalVar._timezoneId = info.Id;
 
             base.OnCloseDialog(this, true, e);
         }

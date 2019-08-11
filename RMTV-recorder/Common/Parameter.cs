@@ -44,17 +44,15 @@ namespace RMTV_recorder
         public static readonly int retry_times_limit = 10;
         public static readonly int retry_wait_min_sec = 3;
         public static readonly int retry_wait_max_sec = 60;
-        public static readonly int disconnection_diff_min = 5;
+        public static readonly int disconnection_diff_min = 3;
         public static readonly int debug_on_click = 3;
 
     }
 
-    class Global
+    class GlobalVar
     {
-        public static ScheduledRecObj _scheduledRecObj;
-        //public static ObservableCollection<RecObj> _groupRecObj;
+        public static RecObjCollection _RecObjs;
         public static System.Windows.Forms.NotifyIcon _notifyIcon;
-        //public static object _syncLock = new object();
         public static string _uniqueStr = Parameter._uniqueStrPrefix;
         public static string _timezoneId = Parameter._timezoneIdUTC;
         public static bool flagTaskComplete = false;

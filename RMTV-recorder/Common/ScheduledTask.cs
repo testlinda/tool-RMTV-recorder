@@ -85,9 +85,10 @@ namespace RMTV_recorder
 
         public void Dispose()
         {
+            CancelTask();
+
             if (_tokenSource != null)
             {
-                _tokenSource.Cancel();
                 _tokenSource.Dispose();
                 _tokenSource = null;
             }

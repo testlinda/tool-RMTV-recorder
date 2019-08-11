@@ -12,8 +12,14 @@ namespace RMTV_recorder
     {
         private Process _process = null;
         private List<string> _log = null;
-        private string _fileName = string.Empty;
-        private bool _isManaul = true;
+        private string FileName { get; set; }
+        private RecordMethod Method { get; set; }
+
+        private enum RecordMethod
+        {
+            Manual,
+            Scheduled,
+        }
 
         public FFmpeg()
         {
@@ -22,53 +28,33 @@ namespace RMTV_recorder
 
         public void StartRecord(string channel)
         {
-            _isManaul = true;
-            string channellink = "";
-
-            GetChannelLink(channel, ref channellink);
+            Method = RecordMethod.Manual;
+            FileName = GetOutputFileName(channel, Method, 0);
+            string channellink = GetChannelLink(channel, "");
             string arguments = String.Concat("-hide_banner -protocol_whitelist \"concat,file,subfile,http,https,tls,rtp,tcp,udp,crypto\" -i \"",
                                            channellink,
                                            "\"", " -c copy ", 
-                                           "\"", Parameter._outputPath, "\\", GetOutputFileName(channel, true, 0), "\"");
+                                           "\"", Parameter._outputPath, "\\", FileName, "\"");
+
             //Debug.WriteLine(arguments);
             RecordVideo(arguments);
         }
 
         public void StartRecord(string channel, string channellink, int duration, int retry_times)
         {
-            _isManaul = false;
-
-            GetChannelLink(channel, ref channellink);
+            Method = RecordMethod.Scheduled;
+            FileName = GetOutputFileName(channel, Method, retry_times);
+            channellink= GetChannelLink(channel, channellink);
             string arguments = String.Concat("-hide_banner -protocol_whitelist \"concat,file,subfile,http,https,tls,rtp,tcp,udp,crypto\" -i \"",
                                channellink,
                                "\"", " -t ", duration,
                                " -c copy ",
-                               "\"", Parameter._outputPath, "\\", GetOutputFileName(channel, false, retry_times), "\"");
+                               "\"", Parameter._outputPath, "\\", FileName, "\"");
+
             //Debug.WriteLine(arguments);
             RecordVideo(arguments);
 
             _process.WaitForExit();
-        }
-
-        private void RecordVideo(string arguments)
-        {
-            ProcessStartInfo startInfo = new ProcessStartInfo();
-            startInfo.CreateNoWindow = true;
-            startInfo.UseShellExecute = false;
-            startInfo.FileName = Parameter._ffmpegPath;
-            startInfo.Arguments = arguments;
-            //startInfo.Arguments = "-h";
-            startInfo.RedirectStandardInput = true;
-            startInfo.RedirectStandardOutput = true;
-            startInfo.RedirectStandardError = true;
-
-            _process = new Process();
-            _process = Process.Start(startInfo);
-
-            //_process.OutputDataReceived += eventOutputDataReceived;
-            //_process.BeginOutputReadLine();
-            _process.ErrorDataReceived += EventErrorDataReceived;
-            _process.BeginErrorReadLine();
         }
 
         public void StopRecord()
@@ -96,9 +82,54 @@ namespace RMTV_recorder
             }
         }
 
-        public bool CheckAlive()
+        public void Dispose()
+        {
+            if (_process != null)
+            {
+                _process.Close();
+                _process.Dispose();
+                _process = null;
+            }
+        }
+
+        public string GetLog()
+        {
+            return string.Join("\n", _log.ToArray());
+        }
+
+        public bool IsFIleExist()
+        {
+            if (File.Exists(Path.Combine(Parameter._outputPath, FileName)))
+            {
+                return true;
+            }
+            return false;
+        }
+
+        public bool IsAlive()
         {
             return !_process.HasExited;
+        }
+
+        private void RecordVideo(string arguments)
+        {
+            ProcessStartInfo startInfo = new ProcessStartInfo();
+            startInfo.CreateNoWindow = true;
+            startInfo.UseShellExecute = false;
+            startInfo.FileName = Parameter._ffmpegPath;
+            startInfo.Arguments = arguments;
+            //startInfo.Arguments = "-h";
+            startInfo.RedirectStandardInput = true;
+            startInfo.RedirectStandardOutput = true;
+            startInfo.RedirectStandardError = true;
+
+            _process = new Process();
+            _process = Process.Start(startInfo);
+
+            //_process.OutputDataReceived += eventOutputDataReceived;
+            //_process.BeginOutputReadLine();
+            _process.ErrorDataReceived += EventErrorDataReceived;
+            _process.BeginErrorReadLine();
         }
 
         internal const int CTRL_C_EVENT = 0;
@@ -124,7 +155,8 @@ namespace RMTV_recorder
                         return false;
 
                     System.Threading.Thread.Sleep(300);
-                    if (_isManaul)
+
+                    if (Method == RecordMethod.Manual)
                         _process.WaitForExit();
                 }
                 finally
@@ -145,29 +177,21 @@ namespace RMTV_recorder
 
         private void EventErrorDataReceived(object sender, DataReceivedEventArgs e)
         {
+            Debug.WriteLine(e.Data);
+
             _log.Add(e.Data);
             if (_log.Count > 100)
             {
                 _log.RemoveRange(0, _log.Count - 10);
             }
-            Debug.WriteLine(e.Data);
         }
 
-        public bool CheckFIleExist()
-        {
-            if(File.Exists(Path.Combine(Parameter._outputPath, _fileName)))
-            {
-                return true;
-            }
-            return false;
-        }
-
-        private void GetChannelLink(string channel, ref string channellink)
+        private string GetChannelLink(string channel, string channellink)
         {
             if (channel.Equals(Parameter.Channel_Spanish))
             {
                 channellink = Parameter._m3u8_es_Path;
-                foreach (M3U8Obj obj in Global._rmtv_link_es)
+                foreach (M3U8Obj obj in GlobalVar._rmtv_link_es)
                 {
                     if (CommonFunc.IsFileValid(obj.Path))
                     {
@@ -179,7 +203,7 @@ namespace RMTV_recorder
             else if (channel.Equals(Parameter.Channel_English))
             {
                 channellink = Parameter._m3u8_en_Path;
-                foreach (M3U8Obj obj in Global._rmtv_link_en)
+                foreach (M3U8Obj obj in GlobalVar._rmtv_link_en)
                 {
                     if (CommonFunc.IsFileValid(obj.Path))
                     {
@@ -188,35 +212,23 @@ namespace RMTV_recorder
                     }
                 }
             }
+
+            return channellink;
         }
 
-        private string GetOutputFileName(string channel, bool isManaul, int retry_times)
+        private string GetOutputFileName(string channel, RecordMethod recordMethod, int retry_times)
         {
             TimeStamp stamp = new TimeStamp();
-            _fileName =  string.Concat("rmtv-record_", 
-                                       stamp.GetTimeStamp(),
-                                       "_",
-                                       channel.ToLower(),
-                                       "_",
-                                       (isManaul ? "manual" : "scheduled"),
-                                       (retry_times!=0 ? string.Format("(reconnected{0:D2})", retry_times) : ""),
-                                       ".mp4");
-            return _fileName;
+            string fileName =  string.Concat("rmtv-record_", 
+                                             stamp.GetTimeStamp(),
+                                             "_",
+                                             channel.ToLower(),
+                                             "_",
+                                             recordMethod.ToString().ToLower(),
+                                             (retry_times!=0 ? string.Format("(reconnected{0:D2})", retry_times) : ""),
+                                             ".mp4");
+            return fileName;
         }
-
-        public string GetLog()
-        {
-            return string.Join("\n", _log.ToArray());
-        }
-
-        public void Dispose()
-        {
-            if (_process != null)
-            {
-                _process.Close();
-                _process.Dispose();
-                _process = null;
-            }
-        }
+        
     }
 }
