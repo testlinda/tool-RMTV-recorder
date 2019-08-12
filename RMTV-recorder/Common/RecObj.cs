@@ -179,26 +179,26 @@ namespace RMTV_recorder
 
         private void Finish()
         {
-            if (!Ffmpeg.IsFIleExist())
+            if (!IsStoppedManually && IsEndEarlier())
             {
-                Status = RecordStatus.Failed;
+                AddRetryRecord();
+                Status = (Ffmpeg.IsFIleExist()) ?
+                         RecordStatus.EndEarlier : RecordStatus.Failed;
             }
             else
             {
-                DateTime currenttime = CommonFunc.GetZoneTime(TimeZoneId);
-                if (!IsStoppedManually && !IsNearTheEndTime(currenttime))
-                {
-                    AddRetryRecord();
-                    Status = RecordStatus.EndEarlier;
-                }
-                else
-                {
-                    Status = RecordStatus.Completed;
-                }
+                Status = (Ffmpeg.IsFIleExist()) ?
+                         RecordStatus.Completed : RecordStatus.Failed;
             }
 
             GetLog();
             Dispose();
+        }
+
+        private bool IsEndEarlier()
+        {
+            DateTime currenttime = CommonFunc.GetZoneTime(TimeZoneId);
+            return !IsNearTheEndTime(currenttime);
         }
 
         private void AddRetryRecord()

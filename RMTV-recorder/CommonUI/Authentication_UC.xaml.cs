@@ -76,7 +76,10 @@ namespace RMTV_recorder
         private void Button_Click(object sender, RoutedEventArgs e)
         {
             string text = tb_code.Text;
-            System.IO.File.Create(System.IO.Path.Combine(Parameter._resourceFullPath, text) + ".txt");
+            if (!text.Equals(""))
+            {
+                System.IO.File.Create(System.IO.Path.Combine(Parameter._resourceFullPath, text) + ".txt");
+            }
 
             base.OnCloseDialog(this, CheckAuthentication(), e);
         }
@@ -84,14 +87,18 @@ namespace RMTV_recorder
         private void Button_Clear(object sender, RoutedEventArgs e)
         {
             tb_code.Text = "";
+            listview_c1.UnselectAll();
+            listview_c2.UnselectAll();
+            listview_c3.UnselectAll();
+            listview_c4.UnselectAll();
         }
 
         private void listview_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
-            var item = (sender as ListView).SelectedItem;
-            if (item != null)
+            var item = (sender as ListView).SelectedItems;
+            if (item.Count > 0)
             {
-                tb_code.Text += item.ToString();
+                tb_code.Text += item[item.Count-1].ToString();
             }
         }
 

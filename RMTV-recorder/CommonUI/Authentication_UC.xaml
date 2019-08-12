@@ -24,10 +24,10 @@
                     Width="30" Background="LightSalmon"/>
         </StackPanel>
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center">
-            <ListView Name="listview_c1" PreviewMouseLeftButtonUp="listview_PreviewMouseLeftButtonUp"  Background="Transparent" Foreground="Salmon" BorderThickness="0"/>
-            <ListView Name="listview_c2" PreviewMouseLeftButtonUp="listview_PreviewMouseLeftButtonUp" Background="Transparent" Foreground="Salmon" BorderThickness="0"/>
-            <ListView Name="listview_c3" PreviewMouseLeftButtonUp="listview_PreviewMouseLeftButtonUp" Background="Transparent" Foreground="Salmon" BorderThickness="0"/>
-            <ListView Name="listview_c4" PreviewMouseLeftButtonUp="listview_PreviewMouseLeftButtonUp" Background="Transparent" Foreground="Salmon" BorderThickness="0"/>
+            <ListView Name="listview_c1" SelectionMode="Multiple" PreviewMouseLeftButtonUp="listview_PreviewMouseLeftButtonUp"  Background="Transparent" Foreground="Salmon" BorderThickness="0"/>
+            <ListView Name="listview_c2" SelectionMode="Multiple" PreviewMouseLeftButtonUp="listview_PreviewMouseLeftButtonUp" Background="Transparent" Foreground="Salmon" BorderThickness="0"/>
+            <ListView Name="listview_c3" SelectionMode="Multiple" PreviewMouseLeftButtonUp="listview_PreviewMouseLeftButtonUp" Background="Transparent" Foreground="Salmon" BorderThickness="0"/>
+            <ListView Name="listview_c4" SelectionMode="Multiple" PreviewMouseLeftButtonUp="listview_PreviewMouseLeftButtonUp" Background="Transparent" Foreground="Salmon" BorderThickness="0"/>
         </StackPanel>
     </Grid>
 </local:ucCustom>
