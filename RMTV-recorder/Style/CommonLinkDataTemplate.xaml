@@ -1,0 +1,31 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:local="clr-namespace:RMTV_recorder">
+
+    <DataTemplate x:Key="CommonLinkComboCollapsed" >
+        <StackPanel HorizontalAlignment="Stretch" >
+            <TextBlock Text="{Binding Path=Url}"/>
+        </StackPanel>
+    </DataTemplate>
+
+    <DataTemplate x:Key="CommonLinkComboExpanded" >
+        <StackPanel Margin="3" HorizontalAlignment="Stretch">
+            <TextBlock Text="{Binding Path=Name}" Name="tbName" Foreground="Salmon"/>
+            <TextBlock Text="{Binding Path=Url}" Name="tbUrl"/>
+            <TextBlock Text="{Binding Path=Note}" Name="tbNote" Foreground="Gray"/>
+        </StackPanel>
+
+        <DataTemplate.Triggers>
+            <DataTrigger Binding = "{Binding Path=Name}" Value = "">
+                <Setter TargetName = "tbName" 
+					    Property = "Visibility" 
+                        Value = "Collapsed"/>
+            </DataTrigger>
+            <DataTrigger Binding = "{Binding Path=Note}" Value = "">
+                <Setter TargetName = "tbNote" 
+					    Property = "Visibility" 
+                        Value = "Collapsed"/>
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+</ResourceDictionary>

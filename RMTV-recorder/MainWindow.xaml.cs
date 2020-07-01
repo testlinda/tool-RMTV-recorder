@@ -68,10 +68,10 @@ namespace RMTV_recorder
             InitialNotifyIcon();
 
             GlobalVar._RecObjs = new RecObjCollection();
-            //Global._scheduledRecObj.RecObjs = new ObservableCollection<RecObj>();
-            //Global._groupRecObj = new ObservableCollection<RecObj>();
-            //BindingOperations.EnableCollectionSynchronization(Global._groupRecObj, Global._syncLock);
             dgRecObj.ItemsSource = GlobalVar._RecObjs.RecObjs;
+            GlobalVar._commonUrlObjs = new CommonUrlCollection();
+            GlobalVar._commonUrlObjs.LoadIni();
+
             Closing += OnClosing;
 
             return true;
@@ -96,13 +96,30 @@ namespace RMTV_recorder
 
         private void LoadIni()
         {
-            if (!File.Exists(Parameter._setting_Path))
+            bool result = true;
+            string resultStr = "";
+
+            resultStr = IniHelper.ReadValue(Parameter._iniSectionSetting, Parameter._iniKeyTimeZoneId, Parameter._setting_Path);
+            if (resultStr.Equals(""))
             {
-                CreateDefaultIniFile();
+                result = IniHelper.WriteValue(Parameter._iniSectionSetting, Parameter._iniKeyTimeZoneId, Parameter._timezoneIdSpain, Parameter._setting_Path);
+                GlobalVar._timezoneId = Parameter._timezoneIdSpain;
+            }
+            else
+            {
+                GlobalVar._timezoneId = resultStr;
             }
 
-            GlobalVar._timezoneId = IniHelper.ReadValue(Parameter._iniSectionSetting, Parameter._iniKeyTimeZoneId, Parameter._setting_Path);
-            GlobalVar._debugmode = (IniHelper.ReadValue(Parameter._iniSectionSetting, Parameter._iniKeyDebugMode, Parameter._setting_Path).Equals("Y", StringComparison.OrdinalIgnoreCase));
+            resultStr = IniHelper.ReadValue(Parameter._iniSectionSetting, Parameter._iniKeyDebugMode, Parameter._setting_Path);
+            if (resultStr.Equals(""))
+            {
+                result = IniHelper.WriteValue(Parameter._iniSectionSetting, Parameter._iniKeyDebugMode, "N", Parameter._setting_Path);
+                GlobalVar._debugmode = false;
+            }
+            else
+            {
+                GlobalVar._debugmode = resultStr.Equals("Y", StringComparison.OrdinalIgnoreCase);
+            }
         }
 
         private void InitialCommonFunc()
@@ -192,6 +209,11 @@ namespace RMTV_recorder
             menu_test.Click += btn_test_Click;
 
             menu_debug.Items.Add(menu_test);
+
+            //to be tested
+            //CommonUrlCollection c = new CommonUrlCollection();
+            //c.LoadIni();
+            //c.SaveIni();
         }
 
         private void RefreshDebugMode()
@@ -204,13 +226,13 @@ namespace RMTV_recorder
         {
             UpdateClock();
 
-            clock = new Clock(this, label_clock, GlobalVar._timezoneId);
+            clock = new Clock(this, label_clockdate, label_clocktime, GlobalVar._timezoneId);
             clock.StartClock();
         }
 
         private void InitialOutputFolder()
         {
-            System.IO.Directory.CreateDirectory(Parameter._outputPath);
+            System.IO.Directory.CreateDirectory(Parameter._outputFullPath);
         }
 
         private void InitialUI()
@@ -374,7 +396,7 @@ namespace RMTV_recorder
 
         private void btn_openfolder_Click(object sender, RoutedEventArgs e)
         {
-            string path = Path.Combine(Environment.CurrentDirectory, Parameter._outputPath);
+            string path = Parameter._outputFullPath;
             try
             {
                 Process.Start(path);

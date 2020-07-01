@@ -1,19 +1,10 @@
 ﻿
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using System.Diagnostics;
 
 namespace RMTV_recorder
 {
@@ -25,6 +16,8 @@ namespace RMTV_recorder
         private DateTime temp_currenttime = DateTime.MinValue;
         private DateTime temp_starttime = DateTime.MinValue;
         private DateTime temp_endtime = DateTime.MinValue;
+        private BackgroundWorker linkValidator = null;
+        private bool IsSelectDateDirty = false;
 
         public AddRec_UC()
         {
@@ -52,8 +45,11 @@ namespace RMTV_recorder
         {
             this.DataContext = this;
 
+            InitailComboBox();
+            InitailStartTimeDatePicker();
             InitailEndTime();
-            
+            InitailLinkValidator();
+
             if (GlobalVar._timezoneId.Equals(Parameter._timezoneIdSpain))
             {
                 rb_channel_spanish.IsChecked = true;
@@ -63,13 +59,43 @@ namespace RMTV_recorder
                 rb_channel_custom.IsChecked = true;
             }
 
-            expander_advanced.Visibility = Visibility.Collapsed;
+            grid_channel_custom.Visibility = Visibility.Collapsed;
+            grid_startdate.Visibility = Visibility.Collapsed;
         }
 
         private void InitailEndTime()
         {
             tb_endtime_hour.Text = CommonFunc.GetZoneTime(GlobalVar._timezoneId).AddHours(1).Hour.ToString("00");
             tb_endtime_min.Text = CommonFunc.GetZoneTime(GlobalVar._timezoneId).Minute.ToString("00");
+        }
+
+        private void InitailComboBox()
+        {
+            cboxFilePath.ItemsSource = GlobalVar._commonUrlObjs.UrlObjs;
+            cboxFilePath.Loaded += delegate
+            {
+                TextBox tb = (TextBox)cboxFilePath.Template.FindName("PART_EditableTextBox", cboxFilePath);
+                if (tb != null)
+                {
+                    tb.LostFocus += new RoutedEventHandler(tboxFilePath_LostFocus);
+                }
+            };
+        }
+
+        private void InitailLinkValidator()
+        {
+            linkValidator = new BackgroundWorker();
+            linkValidator.DoWork += linkValidator_DoWork;
+            linkValidator.RunWorkerCompleted += linkValidator_WorkCompleted;
+            linkValidator.WorkerSupportsCancellation = true;
+        }
+
+        private void InitailStartTimeDatePicker()
+        {
+            DateTime currentdate = CommonFunc.GetZoneTime(GlobalVar._timezoneId).Date;
+            DateTime yesterdate = currentdate.AddDays(-1);
+            datepicker_startdate.SelectedDate = currentdate;
+            datepicker_startdate.BlackoutDates.Add(new CalendarDateRange(DateTime.MinValue, new DateTime(yesterdate.Year, yesterdate.Month, yesterdate.Day)));
         }
 
         private void Button_Close_Click(object sender, RoutedEventArgs e)
@@ -115,7 +141,9 @@ namespace RMTV_recorder
             openFileDialog.InitialDirectory = Parameter._resourceFullPath;
 
             if (openFileDialog.ShowDialog() == true)
-                tboxFilePath.Text = openFileDialog.FileName;
+                cboxFilePath.Text = openFileDialog.FileName;
+
+            DisplayLinkAvailability(false, true, false);
         }
 
         private void Channel_RadioButton_CheckChanged(object sender, RoutedEventArgs e)
@@ -124,7 +152,7 @@ namespace RMTV_recorder
                 return;
 
             RadioButton rb = (RadioButton)sender;
-            grid_custom.Visibility = (rb.Name.Equals(rb_channel_custom.Name)) ? Visibility.Visible : Visibility.Collapsed;
+            grid_channel_custom.Visibility = (rb.Name.Equals(rb_channel_custom.Name)) ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private bool CheckData()
@@ -143,16 +171,16 @@ namespace RMTV_recorder
         {
             if (rb_starttime_now.IsChecked == false)
             {
-                if (tb_statrttime_hour.Text.Equals("") ||
-                    tb_statrttime_min.Text.Equals(""))
+                if (tb_starttime_hour.Text.Equals("") ||
+                    tb_starttime_min.Text.Equals(""))
                 {
                     MessageBox.Show("Start time is invalid.", "Error");
                     return false;
                 }
                 else
                 {
-                    if (Convert.ToInt32(tb_statrttime_hour.Text) > 23 ||
-                        Convert.ToInt32(tb_statrttime_min.Text) > 59)
+                    if (Convert.ToInt32(tb_starttime_hour.Text) > 23 ||
+                        Convert.ToInt32(tb_starttime_min.Text) > 59)
                     {
                         MessageBox.Show("Start time is invalid.", "Error");
                         return false;
@@ -216,15 +244,9 @@ namespace RMTV_recorder
 
         private bool IsCustomDataAcceptable()
         {
-            if (rb_channel_custom.IsChecked == true && tboxFilePath.Text.Length == 0)
+            if (rb_channel_custom.IsChecked == true && cboxFilePath.Text.Length == 0)
             {
                 MessageBox.Show("Custom stream path is empty.", "Error");
-                return false;
-            }
-
-            if (cb_verify.IsChecked == false && !IsChannelLinkAvailable())
-            {
-                MessageBox.Show("Custom stream path is invalid.", "Error");
                 return false;
             }
 
@@ -233,7 +255,7 @@ namespace RMTV_recorder
 
         private bool IsChannelLinkAvailable()
         {
-            string link = tboxFilePath.Text;
+            string link = GetComboBoxText(cboxFilePath);
             bool IsFileExist = System.IO.File.Exists(link);
             bool IsUrlAccessible = CommonFunc.IsUrlValid(link);
 
@@ -315,7 +337,7 @@ namespace RMTV_recorder
             if (rb_channel_spanish.IsChecked == true)
                 return Parameter.Channel_Spanish;
             else if (rb_channel_custom.IsChecked == true)
-                return tboxFilePath.Text;
+                return cboxFilePath.Text;
             else
                 return Parameter.Channel_English;
         }
@@ -330,23 +352,10 @@ namespace RMTV_recorder
             }
             else
             {
-                if (rb_startdate_today.IsChecked == true)
-                {
-                    date = CommonFunc.SetZoneTime(GlobalVar._timezoneId, Convert.ToInt32(tb_statrttime_hour.Text),
-                                                  Convert.ToInt32(tb_statrttime_min.Text));
-
-                    if (IsPreviousTime(date, temp_currenttime))
-                    {
-                        date = date.AddDays(1);
-                    }
-                }
-                else
-                {
-                    date = CommonFunc.SetZoneTime(GlobalVar._timezoneId,
+                date = CommonFunc.SetZoneTime(GlobalVar._timezoneId,
                                                   datepicker_startdate.SelectedDate.Value.Date,
-                                                  Convert.ToInt32(tb_statrttime_hour.Text),
-                                                  Convert.ToInt32(tb_statrttime_min.Text));
-                }
+                                                  Convert.ToInt32(tb_starttime_hour.Text),
+                                                  Convert.ToInt32(tb_starttime_min.Text));
             }
 
             return date;
@@ -358,29 +367,16 @@ namespace RMTV_recorder
 
             if (rb_set_endtime.IsChecked == true)
             {
-                if (rb_startdate_today.IsChecked == true)
-                {
-                    date = CommonFunc.SetZoneTime(GlobalVar._timezoneId, Convert.ToInt32(tb_endtime_hour.Text),
-                                                  Convert.ToInt32(tb_endtime_min.Text));
-
-                    if (IsPreviousTime(date, temp_starttime))
-                    {
-                        date = date.AddDays(1);
-                    }
-                }
-                else
-                {
-                    date = CommonFunc.SetZoneTime(GlobalVar._timezoneId,
+                date = CommonFunc.SetZoneTime(GlobalVar._timezoneId,
                                                   datepicker_startdate.SelectedDate.Value.Date,
                                                   Convert.ToInt32(tb_endtime_hour.Text),
                                                   Convert.ToInt32(tb_endtime_min.Text));
 
-                    if (IsPreviousTime(date, temp_starttime))
-                    {
-                        date = date.AddDays(1);
-                    }
+                if (IsPreviousTime(date, temp_starttime))
+                {
+                    date = date.AddDays(1);
                 }
-                    
+
             }
             else
             {
@@ -425,20 +421,23 @@ namespace RMTV_recorder
 
         private void RadioButton_StartTime_CheckedChanged(object sender, RoutedEventArgs e)
         {
-            if (tb_statrttime_hour == null || tb_statrttime_min == null)
+            if (tb_starttime_hour == null || tb_starttime_min == null)
                 return;
 
-            tb_statrttime_hour.IsEnabled = !(rb_starttime_now.IsChecked == true);
-            tb_statrttime_min.IsEnabled = !(rb_starttime_now.IsChecked == true);
-            tb_statrttime_hour.Text = !(rb_starttime_now.IsChecked == true)? "11":"";
-            tb_statrttime_min.Text = !(rb_starttime_now.IsChecked == true) ? "00" : "";
-
-            expander_advanced.Visibility = !(rb_starttime_now.IsChecked == true) ? Visibility.Visible : Visibility.Collapsed;
+            tb_starttime_hour.IsEnabled = !(rb_starttime_now.IsChecked == true);
+            tb_starttime_min.IsEnabled = !(rb_starttime_now.IsChecked == true);
+            tb_starttime_hour.Text = !(rb_starttime_now.IsChecked == true)? "11":"";
+            tb_starttime_min.Text = !(rb_starttime_now.IsChecked == true) ? "00" : "";
+            grid_startdate.Visibility = !(rb_starttime_now.IsChecked == true) ? Visibility.Visible : Visibility.Collapsed;
+            rb_repeat_times.Visibility = !(rb_starttime_now.IsChecked == true) ? Visibility.Visible : Visibility.Collapsed;
 
             if (rb_starttime_now.IsChecked == true)
             {
-                rb_startdate_today.IsChecked = true;
                 rb_repeat_none.IsChecked = true;
+            }
+            else
+            {
+                AutoFillInDatePicker();
             }
         }
 
@@ -467,14 +466,6 @@ namespace RMTV_recorder
             tb_duration_min.Text = !(rb_set_endtime.IsChecked == true) ? "0" : "";
         }
 
-        private void RadioButton_StartDate_CheckedChanged(object sender, RoutedEventArgs e)
-        {
-            if (rb_startdate_today == null || rb_startdate_specified == null)
-                return;
-
-            datepicker_startdate.IsEnabled = !(rb_startdate_today.IsChecked == true);
-        }
-
         private void RadioButton_Repeat_CheckedChanged(object sender, RoutedEventArgs e)
         {
             if (rb_repeat_none == null || rb_repeat_times == null)
@@ -490,6 +481,80 @@ namespace RMTV_recorder
             {
                 btn_ok.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             }
+        }
+
+        private void tboxFilePath_LostFocus(object sender, RoutedEventArgs e)
+        {
+            //TextBox tb = sender as TextBox;
+            //Debug.WriteLine("-> Textbox LostFocus (IsFocused:{0})", tb.IsFocused);
+
+            DisplayLinkAvailability(true, false, false);
+            linkValidator.RunWorkerAsync();
+        }
+
+        private void linkValidator_DoWork(object sender, DoWorkEventArgs e)
+        {
+            e.Result = IsChannelLinkAvailable();
+        }
+
+        private void linkValidator_WorkCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            DisplayLinkAvailability(false, (bool)e.Result, !(bool)e.Result);
+        }
+
+        private void DisplayLinkAvailability(bool loading, bool ok, bool not_ok)
+        {
+            link_status.Visibility = (loading | ok | not_ok) ? Visibility.Visible : Visibility.Collapsed;
+            img_status_loading.Visibility = (loading ) ? Visibility.Visible : Visibility.Collapsed;
+            img_status_ok.Visibility = (ok) ? Visibility.Visible : Visibility.Collapsed;
+            img_status_error.Visibility = (not_ok) ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        delegate string GetComboBoxTextCallback(ComboBox cbox);
+        private string GetComboBoxText(ComboBox cbox)
+        {
+            if (cbox.Dispatcher.CheckAccess())
+            {
+                return cbox.Text;
+            }
+            else
+            {
+                GetComboBoxTextCallback d = new GetComboBoxTextCallback(GetComboBoxText);
+                return (string)cbox.Dispatcher.Invoke(d, new object[] { cbox });
+            }
+        }
+
+        private void TextBox_StartTime_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (IsSelectDateDirty) return;
+
+            AutoFillInDatePicker();
+        }
+
+        private void AutoFillInDatePicker()
+        {
+            DateTime currenttime = CommonFunc.GetZoneTime(GlobalVar._timezoneId);
+            DateTime date = CommonFunc.SetZoneTime(GlobalVar._timezoneId,
+                                                      currenttime.Date,
+                                                      Convert.ToInt32(tb_starttime_hour.Text),
+                                                      Convert.ToInt32(tb_starttime_min.Text));
+
+            if (IsPreviousTime(date, currenttime))
+            {
+                datepicker_startdate.SelectedDate = date.AddDays(1).Date;
+            }
+            else
+            {
+                datepicker_startdate.SelectedDate = date.Date;
+            }
+        }
+
+        private void btnEditDate_Click(object sender, RoutedEventArgs e)
+        {
+            IsSelectDateDirty = true;
+
+            datepicker_startdate.Style = null;
+            btnEditDate.Visibility = Visibility.Collapsed;
         }
     }
 }

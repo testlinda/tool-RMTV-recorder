@@ -9,18 +9,35 @@
     <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="10" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="80" />
         </Grid.RowDefinitions>
         <Grid Grid.Row="0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="70" />
-                <ColumnDefinition Width="5" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-            <Label Grid.Column="0" Content="Time Zone" VerticalAlignment="Center" Foreground="Salmon"/>
-            <ComboBox Grid.Column="2" Name="cb_timezone" ItemsSource="{Binding}" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+            <Expander Background="PeachPuff" >
+                <Expander.Header>
+                    <StackPanel VerticalAlignment="Stretch">
+                        <TextBlock Text="Time Zone" FontWeight="Bold" Foreground="Salmon"/>
+                    </StackPanel>
+                </Expander.Header>
+                <Grid Margin="10">
+                    <ComboBox Grid.Column="2" Name="cb_timezone" ItemsSource="{Binding}" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                </Grid>
+            </Expander>
         </Grid>
-        <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,10" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+        <Grid Grid.Row="2">
+            <Expander Background="PeachPuff" >
+                <Expander.Header>
+                    <StackPanel VerticalAlignment="Stretch">
+                        <TextBlock Text="Common Url" FontWeight="Bold" Foreground="Salmon"/>
+                    </StackPanel>
+                </Expander.Header>
+                <Grid Margin="10">
+                    
+                </Grid>
+            </Expander>
+        </Grid>
+        <StackPanel Grid.Row="3" Grid.Column="2" Margin="0,10" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
             <Button Content="Cancel" Height="30" Width="60" Background="Transparent" Click="Button_Close_Click"/>
             <Label Width="10"/>
             <Button Content="OK" Height="30" Width="60" Background="Salmon" Click="Button_OK_Click"/>

@@ -7,6 +7,7 @@ using System.Windows;
 using System.Timers;
 using System.Windows.Threading;
 using System.Windows.Controls;
+using System.Globalization;
 
 namespace RMTV_recorder
 {
@@ -14,20 +15,22 @@ namespace RMTV_recorder
     {
         private Timer _timer = null;
         private Window _window = null;
-        private Label _label = null;
+        private Label _label_date = null;
+        private Label _label_time = null;
         private string _time_zone = Parameter._timezoneIdUTC;
 
-        public Clock(Window window, Label label, string time_zone)
+        public Clock(Window window, Label label_date, Label label_time, string time_zone)
         {
             _window = window;
-            _label = label;
+            _label_date = label_date;
+            _label_time = label_time;
             _time_zone = time_zone;
 
             _timer = new Timer();
             _timer.Elapsed += new ElapsedEventHandler(OnClockEvent);
             _timer.Interval = 1000;
 
-            if (_window == null || _label == null)
+            if (_window == null || _label_time == null)
             {
                 //Error
             }
@@ -58,7 +61,8 @@ namespace RMTV_recorder
         public void UpdateTimeZone(string time_zone)
         {
             PauseClock();
-            _label.Content = "--";
+            _label_time.Content = "--";
+            _label_date.Content = "--";
             _time_zone = time_zone;
             StartClock();
         }
@@ -73,7 +77,9 @@ namespace RMTV_recorder
 
         private void updateClock()
         {
-            _label.Content = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, _time_zone).ToString("HH:mm:ss");
+            DateTime time = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, _time_zone);
+            _label_date.Content = time.ToString("yyyy-MM-dd ddd", CultureInfo.CreateSpecificCulture("en-US"));
+            _label_time.Content = time.ToString("HH:mm:ss");
         }
 
     }

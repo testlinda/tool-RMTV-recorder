@@ -268,6 +268,7 @@ namespace RMTV_recorder
                 request.Method = WebRequestMethods.Http.Head;
                 HttpWebResponse response = (HttpWebResponse)request.GetResponse();
                 pageExists = response.StatusCode == HttpStatusCode.OK;
+                response.Close();
             }
             catch (Exception ex)
             {

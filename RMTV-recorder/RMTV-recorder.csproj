@@ -21,17 +21,19 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>$(SolutionDir)\output\$(Configuration)\RMTV-recorder\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
+    <DocumentationFile>
+    </DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
+    <OutputPath>$(SolutionDir)\output\$(Configuration)\RMTV-recorder\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -82,10 +84,13 @@
       <DependentUpon>ShutDownDialog_UC.xaml</DependentUpon>
     </Compile>
     <Compile Include="Common\CommonFunc.cs" />
+    <Compile Include="Common\CommonUrl.cs" />
+    <Compile Include="Common\CommonLinkTemplateSelector.cs" />
     <Compile Include="Common\ContextMenuLeftClickBehavior.cs" />
     <Compile Include="Common\DataGridBehavior.cs" />
     <Compile Include="Common\DownloadFile.cs" />
     <Compile Include="Common\IniHelper.cs" />
+    <Compile Include="Common\Logger.cs" />
     <Compile Include="Common\Parameter.cs" />
     <Compile Include="Common\M3U8.cs" />
     <Compile Include="Common\ScheduledTask.cs" />
@@ -161,6 +166,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Style\CommonLinkDataTemplate.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Style\Style.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -192,11 +201,11 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
-    <None Include="Resource\rmtv-en.m3u8" />
-    <None Include="Resource\rmtv-es.m3u8" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resource\record.png" />
@@ -213,6 +222,11 @@
     <Resource Include="Resource\icon.ico" />
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="Resource\loading_20px.gif" />
+    <Resource Include="Resource\select.png" />
+    <Resource Include="Resource\checkmark.png" />
+    <Resource Include="Resource\error.png" />
+    <Resource Include="Resource\list.png" />
     <Resource Include="Resource\clock.png" />
     <Resource Include="Resource\setting.png" />
     <Resource Include="Resource\debug.png" />
@@ -226,8 +240,14 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Resource Include="Resource\timetable.png" />
-    <Resource Include="Resource\local.png" />
-    <Resource Include="Resource\spain.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
+  </PropertyGroup>
 </Project>

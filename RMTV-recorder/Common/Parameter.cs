@@ -16,7 +16,8 @@ namespace RMTV_recorder
         public static readonly string _logPath = "log";
         public static readonly string _keyString = "aWFtYWNyYXp5bHVrYW1vZHJpY2xvdmVyLnR4dA==";
 
-        public static readonly string _resourceFullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resource");
+        public static readonly string _resourceFullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, _resourcePath);
+        public static readonly string _outputFullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, _outputPath);
         public static readonly string _ffmpegPath = Path.Combine(_resourceFullPath, "bin\\ffmpeg.exe");
         public static readonly string _setting_Path= Path.Combine(_resourceFullPath, "setting.ini");
         public static readonly string _m3u8_es_Path = Path.Combine(_resourceFullPath, "rmtv-es.m3u8");
@@ -35,9 +36,12 @@ namespace RMTV_recorder
         public static readonly string uri_RMTV_m3u8_en = @"https://rmtv24hweblive-lh.akamaihd.net/i/rmtv24hweben_1@300662/master.m3u8";
 
         //ini setting
-        public readonly static string _iniSectionSetting = "Setting";
-        public readonly static string _iniKeyTimeZoneId = "TimeZoneId";
-        public readonly static string _iniKeyDebugMode = "DebugMode";
+        public static readonly string _iniSectionSetting = "Setting";
+        public static readonly string _iniKeyTimeZoneId = "TimeZoneId";
+        public static readonly string _iniKeyDebugMode = "DebugMode";
+        public static readonly string _iniSectionCommonLink = "CommonUrl";
+        public static readonly string _iniKeyNumberOfItem = "NumberOfItems";
+        public static readonly string _iniKeyUrl = "Url";
 
         //other
         public static readonly int delay_sec = 1;
@@ -58,10 +62,11 @@ namespace RMTV_recorder
         public static bool flagTaskComplete = false;
         public static List<M3U8Obj> _rmtv_link_es = null;
         public static List<M3U8Obj> _rmtv_link_en = null;
+        public static CommonUrlCollection _commonUrlObjs;
 
         public static bool _debugmode = false;
-        
-        
+        public static bool _isSaveLog = true;
+
     }
 
     public delegate void OperationHandler();

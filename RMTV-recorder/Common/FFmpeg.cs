@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 
 namespace RMTV_recorder
 {
@@ -34,10 +35,10 @@ namespace RMTV_recorder
             string arguments = String.Concat("-hide_banner -protocol_whitelist \"concat,file,subfile,http,https,tls,rtp,tcp,udp,crypto\" -i \"",
                                            channellink,
                                            "\"", " -c copy ", 
-                                           "\"", Parameter._outputPath, "\\", FileName, "\"");
+                                           "\"", Parameter._outputFullPath, "\\", FileName, "\"");
 
             //Debug.WriteLine(arguments);
-            RecordVideo(arguments);
+            ExecuteFfmpeg(arguments);
         }
 
         public void StartRecord(string channel, string channellink, int duration, int retry_times)
@@ -49,19 +50,34 @@ namespace RMTV_recorder
                                channellink,
                                "\"", " -t ", duration,
                                " -c copy ",
-                               "\"", Parameter._outputPath, "\\", FileName, "\"");
+                               "\"", Parameter._outputFullPath, "\\", FileName, "\"");
+
+            //if (GlobalVar._isSaveLog)
+            //    arguments += " 2> \"log.txt\"";
 
             //Debug.WriteLine(arguments);
-            RecordVideo(arguments);
+            ExecuteFfmpeg(arguments);
 
             _process.WaitForExit();
         }
+
+        //public string GetDuration(string channellink)
+        //{
+        //    string arguments = String.Concat("-hide_banner -protocol_whitelist \"concat,file,subfile,http,https,tls,rtp,tcp,udp,crypto\" -i \"",
+        //                       channellink);
+
+        //    ExecuteFfmpeg(arguments);
+        //    _process.WaitForExit();
+        //    GetLog();
+
+        //    //take a look at: https://stackoverflow.com/questions/6458366/how-to-get-the-video-duration-using-ffmpeg-in-c-sharp-asp-net
+        //}
 
         public void StopRecord()
         {
             if (_process != null && !_process.HasExited)
             {
-                if(!SendCtrlCKey())
+                if (!SendCtrlCKey())
                 {
                     //_process.Kill();
                     _log.Add("[Information] Send Ctrl+C failed. -----");
@@ -99,7 +115,7 @@ namespace RMTV_recorder
 
         public bool IsFIleExist()
         {
-            if (File.Exists(Path.Combine(Parameter._outputPath, FileName)))
+            if (File.Exists(Path.Combine(Parameter._outputFullPath, FileName)))
             {
                 return true;
             }
@@ -111,7 +127,7 @@ namespace RMTV_recorder
             return !_process.HasExited;
         }
 
-        private void RecordVideo(string arguments)
+        private void ExecuteFfmpeg(string arguments)
         {
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.CreateNoWindow = true;
@@ -185,6 +201,34 @@ namespace RMTV_recorder
                 _log.RemoveRange(0, _log.Count - 10);
             }
         }
+
+        //private static Thread startThread(ThreadStart startInfo, string name)
+        //{
+        //    Thread t = new Thread(startInfo);
+        //    t.IsBackground = true;
+        //    t.Name = name;
+        //    t.Start();
+        //    return t;
+        //}
+        //https://stackoverflow.com/questions/16256587/redirecting-output-to-the-text-file-c-sharp
+        //private void WriteLogToFile()
+        //{
+        //    using (StreamReader reader = File.OpenText(_standardInputFileName))
+        //    using (StreamWriter writer = _standardInput)
+        //    {
+        //        writer.AutoFlush = true;
+
+        //        for (; ; )
+        //        {
+        //            string textLine = reader.ReadLine();
+
+        //            if (textLine == null)
+        //                break;
+
+        //            writer.WriteLine(textLine);
+        //        }
+        //    }
+        //}
 
         private string GetChannelLink(string channel, string channellink)
         {
